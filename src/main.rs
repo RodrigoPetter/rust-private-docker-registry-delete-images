@@ -1,21 +1,34 @@
-use std::io;
+use std::{io, process::exit};
 
 fn main() {
     const SCAN_ID: u16 = 998;
     const GC_ID: u16 = 998;
     const EXIT_ID: u16 = 0;
     const FIXED_OPTIONS: [(u16, &str); 3] = [
-        (SCAN_ID, "Scan all repositories size (this task can take several minutes)"),
+        (
+            SCAN_ID,
+            "Scan all repositories size (this task can take several minutes)",
+        ),
         (GC_ID, "Run Garbage Collection"),
         (EXIT_ID, "Exit"),
     ];
 
     loop {
+        println!("List of avaliable repositories and options:");
+
         for (id, text) in FIXED_OPTIONS {
             print_option(&id, &text);
         }
 
-        let _test = read_input("Select one repository:");
+        let selected = read_input("Select an option:");
+
+        match selected {
+            EXIT_ID => exit(0),
+            _ => {
+                println!("Not a valid option. Try again.");
+                continue;
+            }
+        }
     }
 }
 

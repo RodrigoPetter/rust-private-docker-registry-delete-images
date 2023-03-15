@@ -1,3 +1,4 @@
+use std::process::Command as Cmd;
 use std::{io, process::exit};
 
 const COMMANDS: [Command; 3] = [Command::Scan, Command::GC, Command::Exit];
@@ -45,7 +46,7 @@ fn main() {
         match Command::try_from(selected) {
             Ok(cmd) => match cmd {
                 Command::Scan => todo!(),
-                Command::GC => todo!(),
+                Command::GC => run_gc(),
                 Command::Exit => exit(0),
             },
             Err(_) => {
@@ -88,4 +89,15 @@ fn get_repositories_from_registry() -> Vec<(u16, String)> {
         (3, String::from("Placeholder 3")),
         (4, String::from("Placeholder 4")),
     ];
+}
+
+fn run_gc() -> (){
+    Cmd::new("bin/registry")
+    .arg("garbage-collect")
+    .arg("--delete-untagged")
+    .arg("/etc/docker/registry/config.yml")
+    .spawn()
+    .unwrap()
+    .wait()
+    .expect("Error while waiting for GC command to finish...");
 }

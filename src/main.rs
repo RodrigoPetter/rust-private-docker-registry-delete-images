@@ -1,6 +1,7 @@
 use std::{io, process::exit};
 
 mod scan;
+mod registry;
 
 const COMMANDS: [Command; 3] = [Command::Scan, Command::GC, Command::Exit];
 enum Command {
@@ -23,7 +24,7 @@ impl TryFrom<u16> for Command {
 }
 
 fn main() {
-    let avaliable_repositories = get_repositories_from_registry();
+    let avaliable_repositories = registry::get_catalog();
 
     loop {
         println!("List of avaliable repositories and options:");
@@ -80,16 +81,6 @@ fn read_input(message: &str) -> u16 {
             }
         };
     }
-}
-
-fn get_repositories_from_registry() -> Vec<(u16, String)> {
-    //TODO: get real repositories from https://xxx.xx/v2/_catalog
-    return vec![
-        (1, String::from("Placeholder 1")),
-        (2, String::from("Placeholder 2")),
-        (3, String::from("Placeholder 3")),
-        (4, String::from("Placeholder 4")),
-    ];
 }
 
 fn run_gc() -> () {

@@ -45,7 +45,6 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
     // but we need to sum it at least once. So the first image that we check will aggregate the layer value.
     // This may lead to a missleading display size, like showing an zero for de global dedup if all layers are sharede
     // between two distincts repositories.
-    // That's way we order by the size_dedup_repo and not the dedup_global.
     let mut global_digest_tracker: Vec<String> = vec![];
 
     for details in repo_details.iter() {
@@ -55,7 +54,7 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
             tag_count: details.tags.len(),
             size: 0.0,
             size_dedup_repo: 0.0,
-            size_dedup_global: 0.0, //TODO: Implement global debup
+            size_dedup_global: 0.0,
         };
 
         let mut repo_disgest_tracker: Vec<String> = vec![];

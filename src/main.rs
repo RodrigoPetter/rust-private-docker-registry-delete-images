@@ -1,4 +1,5 @@
 use std::{io, process::exit};
+use registry::RegistryClient;
 
 mod scan;
 mod registry;
@@ -24,7 +25,8 @@ impl TryFrom<u16> for Command {
 }
 
 fn main() {
-    let avaliable_repositories = registry::get_catalog();
+    let registry_client : RegistryClient = RegistryClient::new();
+    let avaliable_repositories = registry_client.get_catalog();
 
     loop {
         println!("List of avaliable repositories and options:");

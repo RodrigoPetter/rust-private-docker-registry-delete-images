@@ -64,13 +64,13 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
             for layer in layers.into_iter() {
                 let size = byte_to_mega(&layer.size);
                 repo_display.size += size;
-                
+
                 if !repo_disgest_tracker.contains(&layer.digest) {
                     repo_disgest_tracker.push(layer.digest.clone());
                     repo_display.size_dedup_repo += size;
                 }
 
-                if !global_digest_tracker.contains(&layer.digest){
+                if !global_digest_tracker.contains(&layer.digest) {
                     global_digest_tracker.push(layer.digest.clone());
                     repo_display.size_dedup_global += size;
                 }
@@ -80,7 +80,7 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
         display.push(repo_display);
     }
 
-    display.sort_by(|a, b| b.size_dedup_repo.partial_cmp(&a.size_dedup_repo).unwrap());
+    display.sort_by(|a, b| b.size_dedup_global.partial_cmp(&a.size_dedup_global).unwrap());
 
     println!("\nApproximate size used by the compressed images in the registry:\n");
 
@@ -141,5 +141,9 @@ fn print_row(
 }
 
 fn format_size(size: &f64) -> String {
-    return format!("{:<7.2}MB", size);
+    if size.clone() < 1000.0 {
+        return format!("{:<7.2}MB", size);
+    } else {
+        return format!("{:<7.2}GB", mega_to_giga(size));
+    }
 }

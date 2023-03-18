@@ -1,9 +1,28 @@
+use serde::Deserialize;
+
+const BASE_URL: &str = "http://localhost:5000/v2/";
+
 pub fn get_catalog() -> Vec<(u16, String)> {
-    //TODO: get real repositories from https://xxx.xx/v2/_catalog
-    return vec![
-        (1, String::from("Placeholder 1")),
-        (2, String::from("Placeholder 2")),
-        (3, String::from("Placeholder 3")),
-        (4, String::from("Placeholder 4")),
-    ];
+    const CATALOG_PATH: &str = "_catalog";
+
+    #[derive(Deserialize, Debug)]
+    struct Catalog {
+        repositories: Vec<String>,
+    }
+
+    let client = reqwest::blocking::Client::new();
+
+    let resp: Catalog = client
+        .get(format!("{}{}", BASE_URL, CATALOG_PATH))
+        .send()
+        .unwrap()
+        .json()
+        .unwrap();
+
+    return resp
+        .repositories
+        .into_iter()
+        .enumerate()
+        .map(|(idx, repo)| ((idx + 1) as u16, repo))
+        .collect();
 }

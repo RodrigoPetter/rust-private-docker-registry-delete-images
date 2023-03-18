@@ -41,6 +41,13 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
 
     let mut display: Vec<SizeDisplay> = vec![];
 
+    // If multiples images share the same base layer (like alpine linux) we don't want to sum the layer size multiple times
+    // but we need to sum it at least once. So the first image that we check will aggregate the layer value.
+    // This may lead to a missleading display size, like showing an zero for de global dedup if all layers are sharede
+    // between two distincts repositories.
+    // That's way we order by the size_dedup_repo and not the dedup_global.
+    let mut global_digest_tracker: Vec<String> = vec![];
+
     for details in repo_details.iter() {
         let mut repo_display = SizeDisplay {
             index: details.index,
@@ -49,7 +56,7 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
             size: 0.0,
             size_dedup_repo: 0.0,
             size_dedup_global: 0.0, //TODO: Implement global debup
-        };        
+        };
 
         let mut repo_disgest_tracker: Vec<String> = vec![];
 
@@ -57,10 +64,15 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
             for layer in layers.into_iter() {
                 let size = byte_to_mega(&layer.size);
                 repo_display.size += size;
-
+                
                 if !repo_disgest_tracker.contains(&layer.digest) {
                     repo_disgest_tracker.push(layer.digest.clone());
-                    repo_display.size_dedup_repo += byte_to_mega(&layer.size);
+                    repo_display.size_dedup_repo += size;
+                }
+
+                if !global_digest_tracker.contains(&layer.digest){
+                    global_digest_tracker.push(layer.digest.clone());
+                    repo_display.size_dedup_global += size;
                 }
             }
         }
@@ -86,14 +98,14 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
 
     for element in display.into_iter() {
         print_row(
-            &element.index.to_string(),            
+            &element.index.to_string(),
             &format_size(&element.size_dedup_repo),
             &format_size(&element.size_dedup_global),
             &format_size(&element.size),
             &element.tag_count.to_string(),
             &element.name,
         );
-        
+
         total += element.size;
         total_dedup += element.size_dedup_global;
     }
@@ -114,13 +126,20 @@ fn mega_to_giga(megas: &f64) -> f64 {
     return megas / 1024.0;
 }
 
-fn print_row(column0: &str, column1: &str, column2: &str, column3: &str, column4: &str, column5: &str) {
+fn print_row(
+    column0: &str,
+    column1: &str,
+    column2: &str,
+    column3: &str,
+    column4: &str,
+    column5: &str,
+) {
     println!(
         "{0:<4} | {1:^15} | {2:^17} | {3:^11} | {4:^9} | {5:}",
         column0, column1, column2, column3, column4, column5
     );
 }
 
-fn format_size(size : &f64) -> String{
+fn format_size(size: &f64) -> String {
     return format!("{:<7.2}MB", size);
 }

@@ -1,7 +1,6 @@
 use std::{io, process::exit};
 use registry::RegistryClient;
 
-mod scan;
 mod registry;
 
 const COMMANDS: [Command; 3] = [Command::Scan, Command::GC, Command::Exit];
@@ -50,7 +49,7 @@ fn main() {
         match Command::try_from(selected) {
             //TODO: match against `avaliable_repositories` options
             Ok(cmd) => match cmd {
-                Command::Scan => scan::run(&avaliable_repositories),
+                Command::Scan => registry_client.scan(&avaliable_repositories),
                 Command::GC => run_gc(),
                 Command::Exit => exit(0),
             },

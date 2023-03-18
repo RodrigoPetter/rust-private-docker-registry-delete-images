@@ -9,7 +9,7 @@ use std::io::{self, Read};
 /// For example, many images use the Alpine Linux image as their base, so if this image is included
 /// in multiple layers, its size should only be counted once towards the total size.
 /// However, if each layer is counted separately, it could result in an overestimation of the total size.
-pub fn run(repos: &Vec<(u16, String)>) -> () {
+pub fn run(client : &reqwest::blocking::Client, repos: &Vec<(u16, String)>) -> () {
     struct RepoSize {
         index: u16,
         name: String,

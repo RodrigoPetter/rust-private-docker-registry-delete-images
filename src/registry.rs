@@ -1,5 +1,7 @@
 use serde::Deserialize;
 
+mod scan;
+
 const BASE_URL: &str = "http://localhost:5000/v2/";
 
 pub struct RegistryClient {
@@ -25,7 +27,7 @@ impl RegistryClient {
             .http_client
             .get(format!("{}{}", BASE_URL, CATALOG_PATH))
             .send()
-            .unwrap()
+            .expect(&format!("Unable to fetch the catalog. Check that the registry address [{}] is correct and that it is running.", BASE_URL))
             .json()
             .unwrap();
 
@@ -36,4 +38,9 @@ impl RegistryClient {
             .map(|(idx, repo)| ((idx + 1) as u16, repo))
             .collect();
     }
+
+    pub fn scan(&self, repos: &Vec<(u16, String)>) -> () {
+        return scan::run(&self.http_client, repos);
+    }
+
 }

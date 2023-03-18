@@ -1,76 +1,126 @@
 use std::io::{self, Read};
 
+use super::Layer;
 use super::RegistryClient;
 
-/// This function is currently experiencing some issues with accurately tracking the space used by Docker images.
-/// Specifically, it's only using the digest of the tag to calculate the size,
-/// which can result in inaccuracies when there are multiple layers that share the same blob.
-/// In order to properly calculate the total size, layers that have the same SHA256 hash should
-/// only be counted once towards the total.
-///
-/// For example, many images use the Alpine Linux image as their base, so if this image is included
-/// in multiple layers, its size should only be counted once towards the total size.
-/// However, if each layer is counted separately, it could result in an overestimation of the total size.
 pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
-    struct RepoSize {
+    struct RepoDetails {
         index: u16,
         name: String,
-        size: f64,
-        tag_count: usize,
+        tags: Vec<(String, Vec<Layer>)>,
     }
 
-    let mut repo_sizes: Vec<RepoSize> = vec![];
+    let mut repo_details: Vec<RepoDetails> = vec![];
 
     for (index, repo) in repos {
         let tags_list = registry_client.get_tags(&repo);
 
-        let mut repo_size_accumulator: f64 = 0.0;
+        let mut repo_size = RepoDetails {
+            index: index.clone(),
+            name: repo.clone(),
+            tags: vec![],
+        };
 
-        //TODO: This Vec should be stored outside this loop. Diferent repositories can share the same digest/blob for the tag. I'm keeping it here just for comparison with the GO version. Fit it when the program is ready.
-        // Vector used to store digests whose size has already been queried to prevent
-        // duplicate queries and avoid double-counting the size of tags that share the same blob.
-        let mut digest_tracker: Vec<String> = vec![];
+        for tag in tags_list.into_iter() {
+            println!("[{}] Fetching [{}] repository size...", index, repo);
+            let layers = registry_client.get_manifest_v2(&repo, &tag);
+            repo_size.tags.push((tag, layers))
+        }
 
-        for tag in tags_list.iter() {
-            //TODO: get real tag digest from https://xxx.xx/v2/_REPOSITORY_/manifests/_TAG_ -> NEEDS: "Accept: application/vnd.docker.distribution.manifest.v2+json"
-            let tag_digest = format!(
-                "{}{}",
-                tag, "sha256:6c3c624b58dbbcd3c0dd82b4c53f04194d1247c6eebdaab7c610cf7d66709b3b"
-            );
+        repo_details.push(repo_size);
+    }
 
-            if !digest_tracker.contains(&tag_digest) {
-                println!("[{}] Fetching [{}] repository size...", index, repo);
-                digest_tracker.push(tag_digest);
+    struct SizeDisplay {
+        index: u16,
+        name: String,
+        tag_count: usize,
+        size: f64,
+        size_dedup_repo: f64,
+        size_dedup_global: f64,
+    }
 
-                //TODO: get real tag size from https://xxx.xx/v2/_REPOSITORY_/manifests/_TAG_ -> same url than before, but without the Accept header
-                repo_size_accumulator += 1.45354;
+    let mut display: Vec<SizeDisplay> = vec![];
+
+    for details in repo_details.iter() {
+        let mut repo_display = SizeDisplay {
+            index: details.index,
+            name: details.name.clone(),
+            tag_count: details.tags.len(),
+            size: 0.0,
+            size_dedup_repo: 0.0,
+            size_dedup_global: 0.0, //TODO: Implement global debup
+        };        
+
+        let mut repo_disgest_tracker: Vec<String> = vec![];
+
+        for (_, layers) in details.tags.iter() {
+            for layer in layers.into_iter() {
+                let size = byte_to_mega(&layer.size);
+                repo_display.size += size;
+
+                if !repo_disgest_tracker.contains(&layer.digest) {
+                    repo_disgest_tracker.push(layer.digest.clone());
+                    repo_display.size_dedup_repo += byte_to_mega(&layer.size);
+                }
             }
         }
 
-        repo_sizes.push(RepoSize {
-            index: index.clone(),
-            name: repo.clone(),
-            size: repo_size_accumulator,
-            tag_count: tags_list.len(),
-        });
+        display.push(repo_display);
     }
 
-    repo_sizes.sort_by(|a, b| b.size.partial_cmp(&a.size).unwrap());
+    display.sort_by(|a, b| b.size_dedup_repo.partial_cmp(&a.size_dedup_repo).unwrap());
 
-    println!("Approximate size used by the compressed images in the registry (note: this size does not take into account that the same layer can be shared between multiple Docker images):");
+    println!("\nApproximate size used by the compressed images in the registry:\n");
 
     let mut total: f64 = 0.0;
-    for element in repo_sizes.into_iter() {
-        println!(
-            "{:>10.2} MB - {:^3} tags - {} ({})",
-            element.size, element.tag_count, element.name, element.index
+    let mut total_dedup: f64 = 0.0;
+
+    print_row(
+        "idx",
+        "Repo Dedup Size",
+        "Global Dedup Size",
+        "Total Size",
+        "Tag Count",
+        "Repository",
+    );
+
+    for element in display.into_iter() {
+        print_row(
+            &element.index.to_string(),            
+            &format_size(&element.size_dedup_repo),
+            &format_size(&element.size_dedup_global),
+            &format_size(&element.size),
+            &element.tag_count.to_string(),
+            &element.name,
         );
+        
         total += element.size;
+        total_dedup += element.size_dedup_global;
     }
 
-    println!("Total: {:>7.3}GB", total / 1024.0);
+    println!("\nTotal: {:>7.3}GB", mega_to_giga(&total));
+    println!("Total Dedup: {:>7.3}GB\n", mega_to_giga(&total_dedup));
     println!("Press enter to continue...");
     io::stdin().read(&mut [0u8]).expect("Failed to read input");
 
     return ();
+}
+
+fn byte_to_mega(bytes: &usize) -> f64 {
+    return (bytes.clone() as f64 / 1024.0) / 1024.0;
+}
+
+fn mega_to_giga(megas: &f64) -> f64 {
+    return megas / 1024.0;
+}
+
+fn print_row(column0: &str, column1: &str, column2: &str, column3: &str, column4: &str, column5: &str) {
+    println!(
+        "{0:<4} | {1:^15} | {2:^17} | {3:^11} | {4:^9} | {5:}",
+        column0, column1, column2, column3, column4, column5
+    );
+}
+
+fn format_size(size : &f64) -> String{
+    return format!("{:<7.2}MB", size);
 }

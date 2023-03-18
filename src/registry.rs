@@ -8,6 +8,12 @@ pub struct RegistryClient {
     http_client: reqwest::blocking::Client,
 }
 
+#[derive(Deserialize)]
+pub struct Layer {
+    size: usize,
+    digest: String
+}
+
 impl RegistryClient {
     pub fn new() -> RegistryClient {
         RegistryClient {
@@ -18,7 +24,7 @@ impl RegistryClient {
     pub fn get_catalog(&self) -> Vec<(u16, String)> {
         const CATALOG_PATH: &str = "_catalog";
 
-        #[derive(Deserialize, Debug)]
+        #[derive(Deserialize)]
         struct Catalog {
             repositories: Vec<String>,
         }
@@ -46,7 +52,7 @@ impl RegistryClient {
     pub fn get_tags(&self, repo_name: &str) -> Vec<String> {
         const TAGS_PATH: &str = "/tags/list";
 
-        #[derive(Deserialize, Debug)]
+        #[derive(Deserialize)]
         struct Tags {
             tags: Vec<String>,
         }
@@ -60,5 +66,26 @@ impl RegistryClient {
             .unwrap();
 
         return resp.tags;
+    }
+
+    pub fn get_manifest_v2(&self, repo_name: &str, tag_name: &str) -> Vec<Layer>{
+        const MANIFEST_PATH: &str = "/manifests/";
+        const MANIFEST_V2_HEADER: &str = "application/vnd.docker.distribution.manifest.v2+json";
+
+        #[derive(Deserialize)]
+        struct Manifest {
+            layers: Vec<Layer>
+        }
+
+        let resp: Manifest = self
+        .http_client
+        .get(format!("{}{}{}{}", BASE_URL, repo_name, MANIFEST_PATH, tag_name))
+        .header("Accept", MANIFEST_V2_HEADER)
+        .send()
+        .unwrap()
+        .json()
+        .unwrap();
+
+        return resp.layers;
     }
 }

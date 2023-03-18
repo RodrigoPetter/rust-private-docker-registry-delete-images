@@ -40,7 +40,25 @@ impl RegistryClient {
     }
 
     pub fn scan(&self, repos: &Vec<(u16, String)>) -> () {
-        return scan::run(&self.http_client, repos);
+        return scan::run(&self, repos);
     }
 
+    pub fn get_tags(&self, repo_name: &str) -> Vec<String> {
+        const TAGS_PATH: &str = "/tags/list";
+
+        #[derive(Deserialize, Debug)]
+        struct Tags {
+            tags: Vec<String>,
+        }
+
+        let resp: Tags = self
+            .http_client
+            .get(format!("{}{}{}", BASE_URL, repo_name, TAGS_PATH))
+            .send()
+            .unwrap()
+            .json()
+            .unwrap();
+
+        return resp.tags;
+    }
 }

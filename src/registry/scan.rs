@@ -1,15 +1,17 @@
 use std::io::{self, Read};
 
+use super::RegistryClient;
+
 /// This function is currently experiencing some issues with accurately tracking the space used by Docker images.
 /// Specifically, it's only using the digest of the tag to calculate the size,
 /// which can result in inaccuracies when there are multiple layers that share the same blob.
 /// In order to properly calculate the total size, layers that have the same SHA256 hash should
 /// only be counted once towards the total.
-/// 
+///
 /// For example, many images use the Alpine Linux image as their base, so if this image is included
 /// in multiple layers, its size should only be counted once towards the total size.
 /// However, if each layer is counted separately, it could result in an overestimation of the total size.
-pub fn run(client : &reqwest::blocking::Client, repos: &Vec<(u16, String)>) -> () {
+pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
     struct RepoSize {
         index: u16,
         name: String,
@@ -20,8 +22,7 @@ pub fn run(client : &reqwest::blocking::Client, repos: &Vec<(u16, String)>) -> (
     let mut repo_sizes: Vec<RepoSize> = vec![];
 
     for (index, repo) in repos {
-        //TODO: get real tada about the tags inside a repository from https://xxx.xx/v2/_REPOSITORY_/tags/list"
-        let tags_list = vec!["v3.1.2", "v2.9.8", "v1.2.1", "v1.0.0", "v0.1.0"];
+        let tags_list = registry_client.get_tags(&repo);
 
         let mut repo_size_accumulator: f64 = 0.0;
 
@@ -58,15 +59,18 @@ pub fn run(client : &reqwest::blocking::Client, repos: &Vec<(u16, String)>) -> (
 
     println!("Approximate size used by the compressed images in the registry (note: this size does not take into account that the same layer can be shared between multiple Docker images):");
 
-    let mut total : f64 = 0.0;
+    let mut total: f64 = 0.0;
     for element in repo_sizes.into_iter() {
-        println!("{:>10.2} MB - {:^3} tags - {} ({})", element.size, element.tag_count, element.name, element.index);
+        println!(
+            "{:>10.2} MB - {:^3} tags - {} ({})",
+            element.size, element.tag_count, element.name, element.index
+        );
         total += element.size;
     }
 
-    println!("Total: {:>7.3}GB", total/1024.0);
+    println!("Total: {:>7.3}GB", total / 1024.0);
     println!("Press enter to continue...");
     io::stdin().read(&mut [0u8]).expect("Failed to read input");
-    
+
     return ();
 }

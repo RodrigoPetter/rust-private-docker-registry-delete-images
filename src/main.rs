@@ -48,6 +48,7 @@ fn main() {
         let selected = read_input("Select an option:");
 
         match Command::try_from(selected) {
+            //TODO: match against `avaliable_repositories` options
             Ok(cmd) => match cmd {
                 Command::Scan => scan::run(&avaliable_repositories),
                 Command::GC => run_gc(),

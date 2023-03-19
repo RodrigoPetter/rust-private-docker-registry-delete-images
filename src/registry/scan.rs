@@ -12,6 +12,7 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
 
     let mut repo_details: Vec<RepoDetails> = vec![];
 
+    //TODO: make this loop async with multi-thread to reduce scan time
     for (index, repo) in repos {
         let tags_list = registry_client.get_tags(&repo);
 
@@ -41,10 +42,11 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
 
     let mut display: Vec<SizeDisplay> = vec![];
 
-    // If multiples images share the same base layer (like alpine linux) we don't want to sum the layer size multiple times
-    // but we need to sum it at least once. So the first image that we check will aggregate the layer value.
-    // This may lead to a missleading display size, like showing an zero for de global dedup if all layers are sharede
-    // between two distincts repositories.
+    // When multiple images share the same base layer (such as Alpine Linux), we want to avoid
+    // summing the layer size multiple times. However, we must sum it at least once. Therefore,
+    // we aggregate the layer value for the first image that we check. This may result in a
+    // misleading display size, such as displaying zero for the global deduplication if all
+    // layers are shared between two distinct repositories.
     let mut global_digest_tracker: Vec<String> = vec![];
 
     for details in repo_details.iter() {

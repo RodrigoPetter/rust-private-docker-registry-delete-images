@@ -46,8 +46,7 @@ fn main() {
 
         let selected = read_input("Select an option:");
 
-        if selected == 0 || selected > ((avaliable_repositories.len())) {
-            
+        if selected == 0 || selected > (avaliable_repositories.len()) {
             match Command::try_from(selected) {
                 Ok(cmd) => match cmd {
                     Command::Scan => registry_client.scan(&avaliable_repositories),
@@ -59,10 +58,31 @@ fn main() {
                     continue;
                 }
             }
-
         } else {
-            let repo_selected = &avaliable_repositories[selected-1];
-            println!("{}", repo_selected.1);
+            let repo_selected = &avaliable_repositories[selected - 1].1;
+            println!("{}", repo_selected);
+
+            let tags = registry_client.get_tags(&repo_selected);
+            if tags.len() <= 0 {
+                println!("Nenhuma tag encontrada...");
+                todo!("Go back to the repository list instead of exiting");
+            }
+
+            for (idx, tag) in tags.iter().enumerate() {
+                //TODO: Group tags by digest
+                //TODO: Order tags by creation date
+
+                println!(
+                    "{:<3} - {:<45} | {} | {:^7.2} | {}",
+                    idx.to_string(),
+                    tag,
+                    "data",
+                    "tag_size_MB",
+                    "digest"
+                );
+            }
+
+            read_input("Select a tag to delete:");
         }
     }
 }

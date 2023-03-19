@@ -1,4 +1,4 @@
-use std::io::{self, Read};
+use std::{io::{self, Read}, collections::HashMap};
 
 use super::{RegistryClient, Tag};
 use crate::formats::{byte_to_mega, format_size};
@@ -7,7 +7,7 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
     struct RepoDetails {
         index: u16,
         name: String,
-        tags: Vec<Tag>,
+        tags: HashMap<String, Vec<Tag>>,
     }
 
     let mut repo_details: Vec<RepoDetails> = vec![];
@@ -48,23 +48,27 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
             size_dedup_global: 0.0,
         };
 
-        let mut repo_disgest_tracker: Vec<String> = vec![];
+        for (_, tags) in details.tags.into_iter() {
 
-        for tag in details.tags.into_iter() {
-            for layer in tag.manifest.layers.into_iter() {
-                let size = byte_to_mega(&layer.size);
-                repo_display.size += size;
+            for (idx, tag) in tags.into_iter().enumerate() {
 
-                if !repo_disgest_tracker.contains(&layer.digest) {
-                    repo_disgest_tracker.push(layer.digest.clone());
-                    repo_display.size_dedup_repo += size;
+                for layer in tag.manifest.layers.into_iter() {
+                    let size = byte_to_mega(&layer.size);
+                    repo_display.size += size;
+
+                    // Sums the value only if it is the first element of the tags grouped by
+                    // digest, thus deduplicating between the layers in the same repository.
+                    if idx == 0 {
+                        repo_display.size_dedup_repo += size;
+                    }
+    
+                    if !global_digest_tracker.contains(&layer.digest) {
+                        global_digest_tracker.push(layer.digest.clone());
+                        repo_display.size_dedup_global += size;
+                    }
                 }
 
-                if !global_digest_tracker.contains(&layer.digest) {
-                    global_digest_tracker.push(layer.digest.clone());
-                    repo_display.size_dedup_global += size;
-                }
-            }
+            }            
         }
 
         display.push(repo_display);

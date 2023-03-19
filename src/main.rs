@@ -1,5 +1,5 @@
 use registry::RegistryClient;
-use std::{collections::HashMap, io, process::exit};
+use std::{io, process::exit};
 
 mod formats;
 mod registry;
@@ -70,29 +70,30 @@ fn main() {
             }
             println!("\n ==> Avaliable tags gouped by digest <==");
 
-            let mut tags_group_by_digest: HashMap<String, Vec<String>> =
-                std::collections::HashMap::new();
-            for tag in tags.into_iter() {
-                tags_group_by_digest
-                    .entry(tag.manifest.digest.clone())
-                    .or_insert(Vec::new())
-                    .push(tag.name);
-            }
-
-            for (idx, (digest, tags)) in tags_group_by_digest.into_iter().enumerate() {
-                
-                //TODO: Order tags by creation date               
+            for (idx, digest, created, tags) in
+                tags.into_iter().enumerate().map(|(idx, (digest, tags))| {
+                    (
+                        idx,
+                        digest,
+                        registry_client.get_created(tags.first().unwrap()),
+                        tags.iter()
+                            .map(|tag| tag.name.clone())
+                            .collect::<Vec<String>>()
+                            .join(", "),
+                    )
+                })
+            {
+                //TODO: Order tags by creation date
                 println!(
-                    "{:<3} - {:<45} | {} | {:^7.2} | {:29.29}...",
+                    "{:<3} - {:<35} | {} | {:25.25}...",
                     idx.to_string(),
-                    tags.join(","),
-                    "data",
-                    "tag_size_MB",
+                    tags,
+                    created,
                     digest
-                );                
+                );
             }
 
-            read_input("Select a tag to delete:");
+            read_input("\nSelect a tag to delete:");
         }
     }
 }

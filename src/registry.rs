@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::Deserialize;
 
 mod scan;
@@ -57,10 +59,7 @@ impl RegistryClient {
         return scan::run(&self, repos);
     }
 
-    //TODO: Refactor -> Return an HashMap<String, Vec<Tag>> grouped by the Digest, this way:
-    // - The list will already be grouped when displaying the tag list
-    // - When scanning we can't skip calculating the size for the whole group.
-    pub fn get_tags(&self, repo_name: &str) -> Vec<Tag> {
+    pub fn get_tags(&self, repo_name: &str) -> HashMap<String, Vec<Tag>> {
         const TAGS_PATH: &str = "/tags/list";
 
         #[derive(Deserialize)]
@@ -76,7 +75,7 @@ impl RegistryClient {
             .json()
             .unwrap();
 
-        return resp
+        let tags: Vec<Tag> = resp
             .tags
             .into_iter()
             .map(|tag_name| Tag {
@@ -84,6 +83,22 @@ impl RegistryClient {
                 name: tag_name,
             })
             .collect();
+
+        let mut tags_group_by_digest: HashMap<String, Vec<Tag>> = HashMap::new();
+        for tag in tags.into_iter() {
+            tags_group_by_digest
+                .entry(tag.manifest.digest.clone())
+                .or_insert(Vec::new())
+                .push(tag);
+        }
+
+        return tags_group_by_digest;
+
+    }
+
+    pub fn get_created(&self, tag: &Tag) -> String{
+        //TODO: implement the call to manifest v1
+        return "2023-03-19T21:06:35Z".to_string();
     }
 
     fn get_manifest_v2(&self, repo_name: &str, tag_name: &str) -> Manifest {

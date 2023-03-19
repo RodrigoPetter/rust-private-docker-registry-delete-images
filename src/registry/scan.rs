@@ -111,8 +111,8 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
         total_dedup += element.size_dedup_global;
     }
 
-    println!("\nTotal: {:>7.3}GB", mega_to_giga(&total));
-    println!("Total Dedup: {:>7.3}GB\n", mega_to_giga(&total_dedup));
+    println!("Total Dedup: {}\n", format_size(&total_dedup));
+    println!("\nTotal: {:>15}", format_size(&total));    
     println!("Press enter to continue...");
     io::stdin().read(&mut [0u8]).expect("Failed to read input");
 

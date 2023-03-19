@@ -1,5 +1,6 @@
 use std::io::{self, Read};
 
+use crate::formats::{byte_to_mega, format_size};
 use super::Layer;
 use super::RegistryClient;
 
@@ -111,20 +112,12 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
         total_dedup += element.size_dedup_global;
     }
 
-    println!("Total Dedup: {}\n", format_size(&total_dedup));
-    println!("\nTotal: {:>15}", format_size(&total));    
+    println!("\nTotal Dedup: {}", format_size(&total_dedup));
+    println!("Total: {:>15}\n", format_size(&total));    
     println!("Press enter to continue...");
     io::stdin().read(&mut [0u8]).expect("Failed to read input");
 
     return ();
-}
-
-fn byte_to_mega(bytes: &usize) -> f64 {
-    return (bytes.clone() as f64 / 1024.0) / 1024.0;
-}
-
-fn mega_to_giga(megas: &f64) -> f64 {
-    return megas / 1024.0;
 }
 
 fn print_row(
@@ -139,12 +132,4 @@ fn print_row(
         "{0:<4} | {1:^17} | {2:^15} | {3:^11} | {4:^9} | {5:}",
         column0, column1, column2, column3, column4, column5
     );
-}
-
-fn format_size(size: &f64) -> String {
-    if size.clone() < 1000.0 {
-        return format!("{:<7.2}MB", size);
-    } else {
-        return format!("{:<7.2}GB", mega_to_giga(size));
-    }
 }

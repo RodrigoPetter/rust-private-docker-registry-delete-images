@@ -2,6 +2,7 @@ use registry::RegistryClient;
 use std::{io, process::exit};
 
 mod registry;
+mod formats;
 
 const COMMANDS: [Command; 3] = [Command::Scan, Command::GC, Command::Exit];
 enum Command {

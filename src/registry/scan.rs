@@ -90,8 +90,8 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
 
     print_row(
         "idx",
-        "Repo Dedup Size",
         "Global Dedup Size",
+        "Repo Dedup Size",
         "Total Size",
         "Tag Count",
         "Repository",
@@ -100,8 +100,8 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
     for element in display.into_iter() {
         print_row(
             &element.index.to_string(),
-            &format_size(&element.size_dedup_repo),
             &format_size(&element.size_dedup_global),
+            &format_size(&element.size_dedup_repo),            
             &format_size(&element.size),
             &element.tag_count.to_string(),
             &element.name,
@@ -136,7 +136,7 @@ fn print_row(
     column5: &str,
 ) {
     println!(
-        "{0:<4} | {1:^15} | {2:^17} | {3:^11} | {4:^9} | {5:}",
+        "{0:<4} | {1:^17} | {2:^15} | {3:^11} | {4:^9} | {5:}",
         column0, column1, column2, column3, column4, column5
     );
 }

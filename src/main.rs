@@ -76,7 +76,7 @@ fn main() {
                 println!(
                     "{:<3} - {:<45} | {} | {:^7.2} | {}",
                     idx.to_string(),
-                    tag,
+                    tag.name,
                     "data",
                     "tag_size_MB",
                     "digest"

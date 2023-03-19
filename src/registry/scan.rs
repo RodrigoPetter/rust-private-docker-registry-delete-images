@@ -1,35 +1,23 @@
 use std::io::{self, Read};
 
+use super::{RegistryClient, Tag};
 use crate::formats::{byte_to_mega, format_size};
-use super::Layer;
-use super::RegistryClient;
 
 pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
     struct RepoDetails {
         index: u16,
         name: String,
-        tags: Vec<(String, Vec<Layer>)>,
+        tags: Vec<Tag>,
     }
 
     let mut repo_details: Vec<RepoDetails> = vec![];
-
     //TODO: make this loop async with multi-thread to reduce scan time
     for (index, repo) in repos {
-        let tags_list = registry_client.get_tags(&repo);
-
-        let mut repo_size = RepoDetails {
+        repo_details.push(RepoDetails {
             index: index.clone(),
             name: repo.clone(),
-            tags: vec![],
-        };
-
-        for tag in tags_list.into_iter() {
-            println!("[{}] Fetching [{}] repository size...", index, repo);
-            let manifest = registry_client.get_manifest_v2(&repo, &tag);
-            repo_size.tags.push((tag, manifest.layers))
-        }
-
-        repo_details.push(repo_size);
+            tags: registry_client.get_tags(&repo),
+        });
     }
 
     struct SizeDisplay {
@@ -50,7 +38,7 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
     // layers are shared between two distinct repositories.
     let mut global_digest_tracker: Vec<String> = vec![];
 
-    for details in repo_details.iter() {
+    for details in repo_details.into_iter() {
         let mut repo_display = SizeDisplay {
             index: details.index,
             name: details.name.clone(),
@@ -62,8 +50,8 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
 
         let mut repo_disgest_tracker: Vec<String> = vec![];
 
-        for (_, layers) in details.tags.iter() {
-            for layer in layers.into_iter() {
+        for tag in details.tags.into_iter() {
+            for layer in tag.manifest.layers.into_iter() {
                 let size = byte_to_mega(&layer.size);
                 repo_display.size += size;
 
@@ -82,7 +70,11 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
         display.push(repo_display);
     }
 
-    display.sort_by(|a, b| b.size_dedup_global.partial_cmp(&a.size_dedup_global).unwrap());
+    display.sort_by(|a, b| {
+        b.size_dedup_global
+            .partial_cmp(&a.size_dedup_global)
+            .unwrap()
+    });
 
     println!("\nApproximate size used by the compressed images in the registry:\n");
 
@@ -102,7 +94,7 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
         print_row(
             &element.index.to_string(),
             &format_size(&element.size_dedup_global),
-            &format_size(&element.size_dedup_repo),            
+            &format_size(&element.size_dedup_repo),
             &format_size(&element.size),
             &element.tag_count.to_string(),
             &element.name,
@@ -113,7 +105,7 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
     }
 
     println!("\nTotal Dedup: {}", format_size(&total_dedup));
-    println!("Total: {:>15}\n", format_size(&total));    
+    println!("Total: {:>15}\n", format_size(&total));
     println!("Press enter to continue...");
     io::stdin().read(&mut [0u8]).expect("Failed to read input");
 

@@ -8,15 +8,18 @@ pub struct RegistryClient {
     http_client: reqwest::blocking::Client,
 }
 
-#[derive(Deserialize)]
-pub struct Layer {
-    size: usize,
-    digest: String,
+pub struct Tag {
+    pub name: String,
+    pub manifest: Manifest,
+}
+pub struct Manifest {
+    pub digest: String,
+    pub layers: Vec<Layer>,
 }
 #[derive(Deserialize)]
-pub struct Manifest {
-    digest: String,
-    layers: Vec<Layer>,
+pub struct Layer {
+    pub size: usize,
+    pub digest: String,
 }
 
 impl RegistryClient {
@@ -54,7 +57,7 @@ impl RegistryClient {
         return scan::run(&self, repos);
     }
 
-    pub fn get_tags(&self, repo_name: &str) -> Vec<String> {
+    pub fn get_tags(&self, repo_name: &str) -> Vec<Tag> {
         const TAGS_PATH: &str = "/tags/list";
 
         #[derive(Deserialize)]
@@ -70,13 +73,24 @@ impl RegistryClient {
             .json()
             .unwrap();
 
-        return resp.tags;
+        return resp
+            .tags
+            .into_iter()
+            .map(|tag_name| Tag {
+                manifest: self.get_manifest_v2(repo_name, &tag_name),
+                name: tag_name,
+            })
+            .collect();
     }
 
-    pub fn get_manifest_v2(&self, repo_name: &str, tag_name: &str) -> Manifest {
+    fn get_manifest_v2(&self, repo_name: &str, tag_name: &str) -> Manifest {
         const MANIFEST_PATH: &str = "/manifests/";
         const MANIFEST_V2_HEADER: &str = "application/vnd.docker.distribution.manifest.v2+json";
 
+        println!(
+            "Fetching [{}] repository manifest for [{}]...",
+            repo_name, tag_name
+        );
         let resp = self
             .http_client
             .get(format!(
@@ -94,8 +108,13 @@ impl RegistryClient {
             .to_str()
             .unwrap()
             .to_string();
-        
-        let json: Manifest = resp.json().unwrap();
+
+        #[derive(Deserialize)]
+        struct ManifestApiResponse {
+            pub layers: Vec<Layer>,
+        }
+
+        let json: ManifestApiResponse = resp.json().unwrap();
 
         return Manifest {
             digest: tag_digest,

@@ -57,6 +57,9 @@ impl RegistryClient {
         return scan::run(&self, repos);
     }
 
+    //TODO: Refactor -> Return an HashMap<String, Vec<Tag>> grouped by the Digest, this way:
+    // - The list will already be grouped when displaying the tag list
+    // - When scanning we can't skip calculating the size for the whole group.
     pub fn get_tags(&self, repo_name: &str) -> Vec<Tag> {
         const TAGS_PATH: &str = "/tags/list";
 

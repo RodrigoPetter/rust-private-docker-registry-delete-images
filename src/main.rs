@@ -70,19 +70,25 @@ fn main() {
             }
             println!("\n ==> Avaliable tags gouped by digest <==");
 
-            for (idx, digest, created, tags) in
-                tags.into_iter().enumerate().map(|(idx, (digest, tags))| {
+            //TODO: Refactor this ordering. Maybe there is some data structure in rust that can help? BTreeMap? 
+            let mut display_ordered = tags
+                .into_iter()
+                .enumerate()
+                .map(|(idx, (digest, tags))| {
                     (
                         idx,
                         digest,
-                        registry_client.get_created(tags.first().unwrap()),
+                        registry_client.get_created(repo_selected, tags.first().unwrap()),
                         tags.iter()
                             .map(|tag| tag.name.clone())
                             .collect::<Vec<String>>()
                             .join(", "),
                     )
                 })
-            {
+                .collect::<Vec<_>>();
+            display_ordered.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap());
+
+            for (idx, digest, created, tags) in display_ordered {
                 //TODO: Order tags by creation date
                 println!(
                     "{:<3} - {:<35} | {} | {:25.25}...",

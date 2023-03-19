@@ -93,12 +93,36 @@ impl RegistryClient {
         }
 
         return tags_group_by_digest;
-
     }
 
-    pub fn get_created(&self, tag: &Tag) -> String{
-        //TODO: implement the call to manifest v1
-        return "2023-03-19T21:06:35Z".to_string();
+    pub fn get_created(&self, repo_name: &str, tag: &Tag) -> String {
+        const MANIFEST_PATH: &str = "/manifests/";
+
+        #[derive(Deserialize)]
+        struct ManifestV1{
+            history: Vec<ManifestHistoryV1>
+        }
+        #[derive(Deserialize)]
+        #[allow(non_camel_case_types)]
+        #[allow(non_snake_case)]
+        struct ManifestHistoryV1 {
+            v1Compatibility: String
+        }
+        #[derive(Deserialize)]
+        #[allow(non_camel_case_types)]
+        struct v1Compatibility {
+            created: String
+        }
+
+        let resp: ManifestV1 = self
+        .http_client
+        .get(format!("{}{}{}{}",BASE_URL, repo_name, MANIFEST_PATH, tag.name))
+        .send()
+        .expect(&format!("Unable to fetch the catalog. Check that the registry address [{}] is correct and that it is running.", BASE_URL))
+        .json().unwrap();
+
+        let v1comp :v1Compatibility = serde_json::from_str(&resp.history.first().unwrap().v1Compatibility).unwrap();
+        return v1comp.created.split(".").collect::<Vec<_>>().first().unwrap().to_string();
     }
 
     fn get_manifest_v2(&self, repo_name: &str, tag_name: &str) -> Manifest {

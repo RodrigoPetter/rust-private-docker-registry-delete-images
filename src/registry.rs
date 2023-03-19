@@ -11,7 +11,12 @@ pub struct RegistryClient {
 #[derive(Deserialize)]
 pub struct Layer {
     size: usize,
-    digest: String
+    digest: String,
+}
+#[derive(Deserialize)]
+pub struct Manifest {
+    digest: String,
+    layers: Vec<Layer>,
 }
 
 impl RegistryClient {
@@ -68,24 +73,33 @@ impl RegistryClient {
         return resp.tags;
     }
 
-    pub fn get_manifest_v2(&self, repo_name: &str, tag_name: &str) -> Vec<Layer>{
+    pub fn get_manifest_v2(&self, repo_name: &str, tag_name: &str) -> Manifest {
         const MANIFEST_PATH: &str = "/manifests/";
         const MANIFEST_V2_HEADER: &str = "application/vnd.docker.distribution.manifest.v2+json";
 
-        #[derive(Deserialize)]
-        struct Manifest {
-            layers: Vec<Layer>
-        }
+        let resp = self
+            .http_client
+            .get(format!(
+                "{}{}{}{}",
+                BASE_URL, repo_name, MANIFEST_PATH, tag_name
+            ))
+            .header("Accept", MANIFEST_V2_HEADER)
+            .send()
+            .unwrap();
 
-        let resp: Manifest = self
-        .http_client
-        .get(format!("{}{}{}{}", BASE_URL, repo_name, MANIFEST_PATH, tag_name))
-        .header("Accept", MANIFEST_V2_HEADER)
-        .send()
-        .unwrap()
-        .json()
-        .unwrap();
+        let tag_digest = resp
+            .headers()
+            .get("Docker-Content-Digest")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
+        
+        let json: Manifest = resp.json().unwrap();
 
-        return resp.layers;
+        return Manifest {
+            digest: tag_digest,
+            layers: json.layers,
+        };
     }
 }

@@ -25,8 +25,8 @@ pub fn run(registry_client: &RegistryClient, repos: &Vec<(u16, String)>) -> () {
 
         for tag in tags_list.into_iter() {
             println!("[{}] Fetching [{}] repository size...", index, repo);
-            let layers = registry_client.get_manifest_v2(&repo, &tag);
-            repo_size.tags.push((tag, layers))
+            let manifest = registry_client.get_manifest_v2(&repo, &tag);
+            repo_size.tags.push((tag, manifest.layers))
         }
 
         repo_details.push(repo_size);

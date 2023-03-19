@@ -1,4 +1,3 @@
-
 pub fn byte_to_mega(bytes: &usize) -> f64 {
     return (bytes.clone() as f64 / 1024.0) / 1024.0;
 }

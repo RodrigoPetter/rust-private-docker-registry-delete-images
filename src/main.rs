@@ -1,8 +1,8 @@
 use registry::RegistryClient;
-use std::{io, process::exit};
+use std::{collections::HashMap, io, process::exit};
 
-mod registry;
 mod formats;
+mod registry;
 
 const COMMANDS: [Command; 3] = [Command::Scan, Command::GC, Command::Exit];
 enum Command {
@@ -68,19 +68,28 @@ fn main() {
                 println!("Nenhuma tag encontrada...");
                 todo!("Go back to the repository list instead of exiting");
             }
+            println!("\n ==> Avaliable tags gouped by digest <==");
 
-            for (idx, tag) in tags.iter().enumerate() {
-                //TODO: Group tags by digest
-                //TODO: Order tags by creation date
+            let mut tags_group_by_digest: HashMap<String, Vec<String>> =
+                std::collections::HashMap::new();
+            for tag in tags.into_iter() {
+                tags_group_by_digest
+                    .entry(tag.manifest.digest.clone())
+                    .or_insert(Vec::new())
+                    .push(tag.name);
+            }
 
+            for (idx, (digest, tags)) in tags_group_by_digest.into_iter().enumerate() {
+                
+                //TODO: Order tags by creation date               
                 println!(
-                    "{:<3} - {:<45} | {} | {:^7.2} | {}",
+                    "{:<3} - {:<45} | {} | {:^7.2} | {:29.29}...",
                     idx.to_string(),
-                    tag.name,
+                    tags.join(","),
                     "data",
                     "tag_size_MB",
-                    "digest"
-                );
+                    digest
+                );                
             }
 
             read_input("Select a tag to delete:");

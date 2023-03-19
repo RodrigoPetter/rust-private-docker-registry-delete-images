@@ -1,5 +1,5 @@
-use std::{io, process::exit};
 use registry::RegistryClient;
+use std::{io, process::exit};
 
 mod registry;
 
@@ -10,10 +10,10 @@ enum Command {
     Exit,
 }
 
-impl TryFrom<u16> for Command {
+impl TryFrom<usize> for Command {
     type Error = ();
 
-    fn try_from(value: u16) -> Result<Self, Self::Error> {
+    fn try_from(value: usize) -> Result<Self, Self::Error> {
         match value {
             value if value == 998 => Ok(Command::Scan),
             value if value == 999 => Ok(Command::GC),
@@ -24,7 +24,7 @@ impl TryFrom<u16> for Command {
 }
 
 fn main() {
-    let registry_client : RegistryClient = RegistryClient::new();
+    let registry_client: RegistryClient = RegistryClient::new();
     let avaliable_repositories = registry_client.get_catalog();
 
     loop {
@@ -46,17 +46,23 @@ fn main() {
 
         let selected = read_input("Select an option:");
 
-        match Command::try_from(selected) {
-            //TODO: match against `avaliable_repositories` options
-            Ok(cmd) => match cmd {
-                Command::Scan => registry_client.scan(&avaliable_repositories),
-                Command::GC => run_gc(),
-                Command::Exit => exit(0),
-            },
-            Err(_) => {
-                println!("Not a valid option. Try again.");
-                continue;
+        if selected == 0 || selected > ((avaliable_repositories.len())) {
+            
+            match Command::try_from(selected) {
+                Ok(cmd) => match cmd {
+                    Command::Scan => registry_client.scan(&avaliable_repositories),
+                    Command::GC => run_gc(),
+                    Command::Exit => exit(0),
+                },
+                Err(_) => {
+                    println!("Not a valid option. Try again.");
+                    continue;
+                }
             }
+
+        } else {
+            let repo_selected = &avaliable_repositories[selected-1];
+            println!("{}", repo_selected.1);
         }
     }
 }
@@ -65,7 +71,7 @@ fn print_option(id: &u16, text: &str) {
     println!("{:<4}- {text}", id);
 }
 
-fn read_input(message: &str) -> u16 {
+fn read_input(message: &str) -> usize {
     loop {
         println!("{message}");
 

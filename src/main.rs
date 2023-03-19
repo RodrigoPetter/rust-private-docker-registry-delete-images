@@ -86,7 +86,7 @@ fn main() {
                     )
                 })
                 .collect::<Vec<_>>();
-            display_ordered.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap());
+            display_ordered.sort_by(|a, b| a.2.partial_cmp(&b.2).unwrap());
 
             for (idx, digest, created, tags) in display_ordered {
                 //TODO: Order tags by creation date

@@ -50,11 +50,7 @@ impl RegistryClient {
         return resp.repositories;
     }
 
-    pub fn scan(&self, repos: &Vec<(u16, String)>) -> () {
-        return scan::run(&self, repos);
-    }
-
-    pub fn get_tags(&self, repo_name: &str) -> HashMap<String, Vec<Tag>> {
+    pub fn get_tags_grouped_by_digest(&self, repo_name: &str) -> HashMap<String, Vec<Tag>> {
         const TAGS_PATH: &str = "/tags/list";
 
         #[derive(Deserialize)]

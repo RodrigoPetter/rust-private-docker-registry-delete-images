@@ -1,7 +1,9 @@
+use menu::{Menu, MenuItem};
 use registry::RegistryClient;
 use std::{io, process::exit};
 
 mod formats;
+mod menu;
 mod registry;
 
 const COMMANDS: [Command; 3] = [Command::Scan, Command::GC, Command::Exit];
@@ -28,12 +30,22 @@ fn main() {
     let registry_client: RegistryClient = RegistryClient::new();
     let avaliable_repositories = registry_client.get_catalog();
 
+    let main_menu = Menu::new(
+        vec!["Options".to_string()],
+        avaliable_repositories
+            .into_iter()
+            .map(|name| MenuItem {
+                force_code: None,
+                values: vec![name],
+            })
+            .collect(),
+    );
+
     loop {
         println!("List of avaliable repositories and options:");
 
-        for (id, text) in avaliable_repositories.iter() {
-            print_option(id, &text);
-        }
+        //TODO: refactor Menu to have a print fn
+        println!("{}", main_menu.to_string());
         for command in COMMANDS {
             match command {
                 Command::Scan => print_option(
@@ -47,10 +59,10 @@ fn main() {
 
         let selected = read_input("Select an option:");
 
-        if selected == 0 || selected > (avaliable_repositories.len()) {
+        if selected == 0 || selected > (main_menu.itens.len()) {
             match Command::try_from(selected) {
                 Ok(cmd) => match cmd {
-                    Command::Scan => registry_client.scan(&avaliable_repositories),
+                    Command::Scan => registry_client.scan(&vec![(0, "placeholder".to_string())]), //TODO: use correct values
                     Command::GC => run_gc(),
                     Command::Exit => exit(0),
                 },
@@ -60,7 +72,7 @@ fn main() {
                 }
             }
         } else {
-            let repo_selected = &avaliable_repositories[selected - 1].1;
+            let repo_selected = main_menu.itens[selected - 1].values.first().unwrap();
             println!("{}", repo_selected);
 
             let tags = registry_client.get_tags(&repo_selected);
@@ -70,7 +82,7 @@ fn main() {
             }
             println!("\n ==> Avaliable tags gouped by digest <==");
 
-            //TODO: Refactor this ordering. Maybe there is some data structure in rust that can help? BTreeMap? 
+            //TODO: Refactor this ordering. Maybe there is some data structure in rust that can help? BTreeMap?
             let mut display_ordered = tags
                 .into_iter()
                 .enumerate()

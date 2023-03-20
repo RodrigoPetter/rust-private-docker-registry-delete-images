@@ -31,7 +31,7 @@ impl RegistryClient {
         }
     }
 
-    pub fn get_catalog(&self) -> Vec<(u16, String)> {
+    pub fn get_catalog(&self) -> Vec<String> {
         const CATALOG_PATH: &str = "_catalog";
 
         #[derive(Deserialize)]
@@ -47,12 +47,7 @@ impl RegistryClient {
             .json()
             .unwrap();
 
-        return resp
-            .repositories
-            .into_iter()
-            .enumerate()
-            .map(|(idx, repo)| ((idx + 1) as u16, repo))
-            .collect();
+        return resp.repositories;
     }
 
     pub fn scan(&self, repos: &Vec<(u16, String)>) -> () {
@@ -99,19 +94,19 @@ impl RegistryClient {
         const MANIFEST_PATH: &str = "/manifests/";
 
         #[derive(Deserialize)]
-        struct ManifestV1{
-            history: Vec<ManifestHistoryV1>
+        struct ManifestV1 {
+            history: Vec<ManifestHistoryV1>,
         }
         #[derive(Deserialize)]
         #[allow(non_camel_case_types)]
         #[allow(non_snake_case)]
         struct ManifestHistoryV1 {
-            v1Compatibility: String
+            v1Compatibility: String,
         }
         #[derive(Deserialize)]
         #[allow(non_camel_case_types)]
         struct v1Compatibility {
-            created: String
+            created: String,
         }
 
         let resp: ManifestV1 = self
@@ -121,8 +116,15 @@ impl RegistryClient {
         .expect(&format!("Unable to fetch the catalog. Check that the registry address [{}] is correct and that it is running.", BASE_URL))
         .json().unwrap();
 
-        let v1comp :v1Compatibility = serde_json::from_str(&resp.history.first().unwrap().v1Compatibility).unwrap();
-        return v1comp.created.split(".").collect::<Vec<_>>().first().unwrap().to_string();
+        let v1comp: v1Compatibility =
+            serde_json::from_str(&resp.history.first().unwrap().v1Compatibility).unwrap();
+        return v1comp
+            .created
+            .split(".")
+            .collect::<Vec<_>>()
+            .first()
+            .unwrap()
+            .to_string();
     }
 
     fn get_manifest_v2(&self, repo_name: &str, tag_name: &str) -> Manifest {

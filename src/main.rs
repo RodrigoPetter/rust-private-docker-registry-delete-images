@@ -59,7 +59,7 @@ fn main() {
 
         let selected = read_input("Select an option:");
 
-        if selected == 0 || selected > (main_menu.itens.len()) {
+        if selected == 0 || selected > (main_menu.items.len()) {
             match Command::try_from(selected) {
                 Ok(cmd) => match cmd {
                     Command::Scan => registry_client.scan(&vec![(0, "placeholder".to_string())]), //TODO: use correct values
@@ -72,7 +72,7 @@ fn main() {
                 }
             }
         } else {
-            let repo_selected = main_menu.itens[selected - 1].values.first().unwrap();
+            let repo_selected = main_menu.items[selected - 1].values.first().unwrap();
             println!("{}", repo_selected);
 
             let tags = registry_client.get_tags(&repo_selected);

@@ -36,8 +36,8 @@ impl MainMenu {
         println!("Total: {:>15}\n", format_size(&scan_result.total_size));
     }
 
-    pub fn select(scan_result: &ScanResult) {
-        let selected = read_input::<usize>("Select an option:");
+    pub fn select() {
+        read_input::<usize>("Select an option:");
     }
 
 }

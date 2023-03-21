@@ -1,6 +1,6 @@
 use tabled::{builder::Builder, Style};
 
-use crate::registry::{ScanElement, ScanResult};
+use crate::registry::{ScanResult};
 
 pub struct MainMenu {}
 
@@ -25,6 +25,7 @@ impl MainMenu {
             ]);
         }
 
+        println!("\nApproximate size used by the compressed images (gzip) in the registry:\n");
         println!(
             "{}",
             builder.index().build().with(Style::markdown()).to_string()

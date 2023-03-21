@@ -39,7 +39,7 @@ impl RegistryScanner {
         // layers are shared between two distinct repositories.
         let mut global_digest_tracker: Vec<String> = vec![];
 
-        return ScanResult {
+        let mut result = ScanResult {
             elements: catalog
                 .into_iter()
                 .map(|repo| {
@@ -73,5 +73,13 @@ impl RegistryScanner {
             total_size: total,
             total_dedup_size: total_dedup,
         };
+
+        result.elements.sort_by(|a, b| {
+            b.size_dedup_global
+                .partial_cmp(&a.size_dedup_global)
+                .unwrap()
+        });
+
+        return result;
     }
 }

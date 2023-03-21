@@ -47,15 +47,15 @@ impl MainMenu {
         println!("Total: {:>15}\n", format_size(&scan_result.total_size));
     }
 
-    pub fn select(scan_result: &ScanResult) -> &ScanElement {
+    pub fn select(scan_result: &ScanResult) -> Option<&ScanElement> {
         loop {
             let selected = read_input::<usize>("Select an option:");
 
-            if selected > scan_result.elements.len() {
+            if selected > scan_result.elements.len() - 1 {
                 println!("Not a valid option.");
                 continue;
             } else {
-                return scan_result.elements.get(selected).unwrap();
+                return Some(scan_result.elements.get(selected).unwrap());
             }
         }
     }

@@ -86,7 +86,10 @@ impl RegistryClient {
                 .push(tag);
         }
 
-        return tags_group_by_digest.into_iter().map(|(digest, tags)| TagGroup {created: self.get_created(repo_name, tags.first().unwrap()), digest, tags}).collect::<Vec<_>>();
+        let mut tags_group_by_digest = tags_group_by_digest.into_iter().map(|(digest, tags)| TagGroup {created: self.get_created(repo_name, tags.first().unwrap()), digest, tags}).collect::<Vec<_>>();
+
+        tags_group_by_digest.sort_by(|a, b| a.created.partial_cmp(&b.created).unwrap());
+        return tags_group_by_digest;
     }
 
     pub fn get_created(&self, repo_name: &str, tag: &Tag) -> String {

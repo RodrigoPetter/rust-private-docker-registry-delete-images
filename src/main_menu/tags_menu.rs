@@ -13,6 +13,7 @@ impl TagsMenu {
         loop {
             TagsMenu::print(repository);
             let selected = TagsMenu::select(&repository);
+            //TODO: Selected should be a Range<>
             match selected {
                 Some(_) => print!("TODO: implement delete"),
                 None => todo!(),
@@ -39,6 +40,9 @@ impl TagsMenu {
                 group.digest.clone(),
             ]);
         }
+
+        //TODO: Print return to main menu
+        //TODO: Print the sugestion for deletion
 
         println!(
             "\nAvaliable tags for the repository [{}]\n",

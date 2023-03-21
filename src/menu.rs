@@ -1,11 +1,11 @@
 use tabled::{builder::Builder, Style};
 
-use crate::registry::ScanResult;
+use crate::registry::{ScanElement, ScanResult};
 
 pub struct MainMenu {}
 
 impl MainMenu {
-    pub fn print(itens: &Vec<ScanResult>) {
+    pub fn print(scan_result: &ScanResult) {
         let mut builder = Builder::default();
 
         builder.set_columns(vec![
@@ -16,7 +16,7 @@ impl MainMenu {
         ]);
 
         //TODO: Sort before printing
-        for element in itens.iter() {
+        for element in scan_result.elements.iter() {
             builder.add_record(vec![
                 element.repository.clone(),
                 element.tags_grouped_by_digest.len().to_string(),
@@ -29,6 +29,9 @@ impl MainMenu {
             "{}",
             builder.index().build().with(Style::markdown()).to_string()
         );
+
+        println!("\nTotal Dedup: {}", format_size(&scan_result.total_dedup_size));
+        println!("Total: {:>15}\n", format_size(&scan_result.total_size));
     }
 }
 

@@ -1,15 +1,37 @@
 use tabled::{builder::Builder, Style};
-
+use self::tags_menu::TagsMenu;
 use crate::{
     registry::{ScanElement, ScanResult},
     std_in_out::read_input,
 };
 
+mod tags_menu;
+
+enum Command {
+    GC,
+    EXIT
+}
+
 pub struct MainMenu {}
-pub struct TagsMenu {}
 
 impl MainMenu {
-    pub fn print(scan_result: &ScanResult) {
+    const COMMANDS: [Command; 2] = [Command::GC, Command::EXIT];
+
+
+    pub fn open(scan_result: &ScanResult) {
+        
+        loop {
+            MainMenu::print(&scan_result);
+            let selected = MainMenu::select(&scan_result);
+            match selected {
+                Some(repo) => TagsMenu::print(&repo),
+                None => (),
+            }
+        }
+        
+    }
+
+    fn print(scan_result: &ScanResult) {
         let mut builder = Builder::default();
 
         builder.set_columns(vec![
@@ -47,7 +69,7 @@ impl MainMenu {
         println!("Total: {:>15}\n", format_size(&scan_result.total_size));
     }
 
-    pub fn select(scan_result: &ScanResult) -> Option<&ScanElement> {
+    fn select(scan_result: &ScanResult) -> Option<&ScanElement> {
         loop {
             let selected = read_input::<usize>("Select an option:");
 
@@ -58,44 +80,6 @@ impl MainMenu {
                 return Some(scan_result.elements.get(selected).unwrap());
             }
         }
-    }
-}
-
-impl TagsMenu {
-    pub fn print(repository: &ScanElement) {
-        println!("{}", repository.repository);
-
-        if repository.tags_grouped_by_digest.len() <= 0 {
-            println!("No tags found...");
-            todo!("Go back to the repository list instead of exiting");
-        }
-
-        let mut builder = Builder::default();
-
-        builder.set_columns(vec!["tags", "created", "digest"]);
-
-        //TODO: Sort before printing
-        for group in repository.tags_grouped_by_digest.iter() {
-            builder.add_record(vec![
-                group
-                    .tags
-                    .iter()
-                    .map(|t| t.name.clone())
-                    .collect::<Vec<_>>()
-                    .join(", "),
-                group.created.clone(),
-                group.digest.clone(),
-            ]);
-        }
-
-        println!(
-            "\nAvaliable tags for the repository [{}]\n",
-            repository.repository
-        );
-        println!(
-            "{}",
-            builder.index().build().with(Style::markdown()).to_string()
-        );
     }
 }
 

@@ -24,7 +24,7 @@ impl MainMenu {
             MainMenu::print(&scan_result);
             let selected = MainMenu::select(&scan_result);
             match selected {
-                Some(repo) => TagsMenu::print(&repo),
+                Some(repo) => TagsMenu::open(&repo),
                 None => (),
             }
         }

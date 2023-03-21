@@ -1,15 +1,26 @@
-use crate::registry::ScanElement;
+use crate::{registry::{ScanElement, TagGroup}, std_in_out::read_input};
 use tabled::{builder::Builder, Style};
 
 pub struct TagsMenu {}
 impl TagsMenu {
-    pub fn print(repository: &ScanElement) {
+    pub fn open(repository: &ScanElement) {
         println!("{}", repository.repository);
-
         if repository.tags_grouped_by_digest.len() <= 0 {
             println!("No tags found...");
             todo!("Go back to the repository list instead of exiting");
         }
+
+        loop {
+            TagsMenu::print(repository);
+            let selected = TagsMenu::select(&repository);
+            match selected {
+                Some(_) => print!("TODO: implement delete"),
+                None => todo!(),
+            }                    
+        }
+    }
+
+    fn print(repository: &ScanElement) {        
 
         let mut builder = Builder::default();
 
@@ -37,5 +48,21 @@ impl TagsMenu {
             "{}",
             builder.index().build().with(Style::markdown()).to_string()
         );
+    }
+
+    fn select(repository: &ScanElement) -> Option<&TagGroup> {
+        loop {
+            let selected = read_input::<usize>("Select a tag for deletion:");
+
+            match selected {
+                selected if selected < repository.tags_grouped_by_digest.len() => {
+                    return Some(repository.tags_grouped_by_digest.get(selected).unwrap())
+                }
+                _ => {
+                    println!("Not a valid option.");
+                    continue;
+                }
+            }
+        }
     }
 }

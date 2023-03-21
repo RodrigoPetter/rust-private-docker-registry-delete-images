@@ -1,4 +1,5 @@
-use self::client::{RegistryClient, TagGroup};
+use self::client::{RegistryClient};
+pub use self::client::TagGroup;
 
 mod client;
 

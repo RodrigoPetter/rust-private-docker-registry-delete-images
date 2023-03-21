@@ -23,21 +23,18 @@ impl RegistryScanner {
     }
 
     pub fn scan(&mut self) -> Vec<ScanResult> {
-        vec![
+        let catalog = self.client.get_catalog();
+
+        return catalog.into_iter()
+        .map(|repo| 
             ScanResult {
-                repository: "aaa".to_string(),
+                repository: repo,
                 tags_grouped_by_digest: HashMap::new(),
                 size: 50000,
                 size_dedup_repo: 50000,
                 size_dedup_global: 50000,
-            },
-            ScanResult {
-                repository: "bbbb".to_string(),
-                tags_grouped_by_digest: HashMap::new(),
-                size: 990000,
-                size_dedup_repo: 990000,
-                size_dedup_global: 990000,
-            },
-        ]
+            }
+        )
+        .collect::<Vec<_>>();
     }
 }

@@ -1,5 +1,4 @@
-use self::client::{RegistryClient, Tag};
-use std::collections::HashMap;
+use self::client::{RegistryClient, TagGroup};
 
 mod client;
 
@@ -15,7 +14,7 @@ pub struct ScanResult {
 
 pub struct ScanElement {
     pub repository: String,
-    pub tags_grouped_by_digest: HashMap<String, Vec<Tag>>,
+    pub tags_grouped_by_digest: Vec<TagGroup>,
     pub size: usize,
     pub size_dedup_global: usize,
 }
@@ -48,8 +47,8 @@ impl RegistryScanner {
 
                     let mut size: usize = 0;
                     let mut size_dedup_global: usize = 0;
-                    for (_, tags) in tags_grouped_by_digest.iter() {
-                        for tag in tags.iter() {
+                    for tag_group in tags_grouped_by_digest.iter() {
+                        for tag in tag_group.tags.iter() {
                             for layer in tag.manifest.layers.iter() {
                                 size += layer.size;
                                 total += layer.size;

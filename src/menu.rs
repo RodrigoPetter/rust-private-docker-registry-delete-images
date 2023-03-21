@@ -17,9 +17,10 @@ impl MainMenu {
 
         //TODO: Sort before printing
         for element in scan_result.elements.iter() {
+
             builder.add_record(vec![
                 element.repository.clone(),
-                element.tags_grouped_by_digest.len().to_string(),
+                element.tags_grouped_by_digest.iter().map(|g| g.tags.len()).sum::<usize>().to_string(),
                 format_size(&element.size_dedup_global),
                 format_size(&element.size),
             ]);
@@ -38,7 +39,7 @@ impl MainMenu {
     pub fn select(scan_result: &ScanResult) {
         let selected = read_input::<usize>("Select an option:");
     }
-    
+
 }
 
 fn format_size(size: &usize) -> String {

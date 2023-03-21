@@ -12,6 +12,11 @@ pub struct Tag {
     pub name: String,
     pub manifest: Manifest,
 }
+pub struct TagGroup {
+    pub digest: String,
+    pub created: String,
+    pub tags: Vec<Tag>,
+}
 pub struct Manifest {
     pub digest: String,
     pub layers: Vec<Layer>,
@@ -48,7 +53,7 @@ impl RegistryClient {
         return resp.repositories;
     }
 
-    pub fn get_tags_grouped_by_digest(&self, repo_name: &str) -> HashMap<String, Vec<Tag>> {
+    pub fn get_tags_grouped_by_digest(&self, repo_name: &str) -> Vec<TagGroup> {
         const TAGS_PATH: &str = "/tags/list";
 
         #[derive(Deserialize)]
@@ -81,7 +86,7 @@ impl RegistryClient {
                 .push(tag);
         }
 
-        return tags_group_by_digest;
+        return tags_group_by_digest.into_iter().map(|(digest, tags)| TagGroup {created: self.get_created(repo_name, tags.first().unwrap()), digest, tags}).collect::<Vec<_>>();
     }
 
     pub fn get_created(&self, repo_name: &str, tag: &Tag) -> String {

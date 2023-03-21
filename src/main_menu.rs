@@ -1,15 +1,17 @@
-use tabled::{builder::Builder, Style};
+use std::process::exit;
+
 use self::tags_menu::TagsMenu;
 use crate::{
     registry::{ScanElement, ScanResult},
     std_in_out::read_input,
 };
+use tabled::{builder::Builder, Style};
 
 mod tags_menu;
 
 enum Command {
     GC,
-    EXIT
+    EXIT,
 }
 
 pub struct MainMenu {}
@@ -18,7 +20,6 @@ impl MainMenu {
     const COMMANDS: [Command; 2] = [Command::GC, Command::EXIT];
 
     pub fn open(scan_result: &ScanResult) {
-        
         loop {
             MainMenu::print(&scan_result);
             let selected = MainMenu::select(&scan_result);
@@ -27,7 +28,6 @@ impl MainMenu {
                 None => (),
             }
         }
-        
     }
 
     fn print(scan_result: &ScanResult) {
@@ -61,13 +61,10 @@ impl MainMenu {
             };
         }
 
-
         println!("\nApproximate size used by the compressed images (gzip) in the registry:\n");
         println!(
             "{}",
-            builder.index().build()
-            .with(Style::markdown())
-            .to_string()
+            builder.index().build().with(Style::markdown()).to_string()
         );
 
         println!(
@@ -81,11 +78,16 @@ impl MainMenu {
         loop {
             let selected = read_input::<usize>("Select an option:");
 
-            if selected > scan_result.elements.len() - 1 {
-                println!("Not a valid option.");
-                continue;
-            } else {
-                return Some(scan_result.elements.get(selected).unwrap());
+            match selected {
+                selected if selected < scan_result.elements.len() => {
+                    return Some(scan_result.elements.get(selected).unwrap())
+                }
+                selected if selected == scan_result.elements.len() => todo!("Call GC"),
+                selected if selected == scan_result.elements.len() + 1 => exit(0),
+                _ => {
+                    println!("Not a valid option.");
+                    continue;
+                }
             }
         }
     }

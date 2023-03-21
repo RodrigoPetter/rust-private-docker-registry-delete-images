@@ -2,22 +2,33 @@ use tabled::{builder::Builder, Style};
 
 use crate::registry::ScanResult;
 
-pub struct MainMenu {
-}
+pub struct MainMenu {}
 
 impl MainMenu {
-    
     pub fn print(itens: &Vec<ScanResult>) {
         let mut builder = Builder::default();
 
-        builder.set_columns(vec!["repository", "tags", "disk usage"]);
+        builder.set_columns(vec![
+            "repository",
+            "tags",
+            "disk usage",
+            "total layers size",
+        ]);
 
         //TODO: Sort before printing
         for element in itens.iter() {
-            builder.add_record(vec![element.repository.clone(), element.tags_grouped_by_digest.len().to_string(), format_size(&element.size_dedup_global)]);
+            builder.add_record(vec![
+                element.repository.clone(),
+                element.tags_grouped_by_digest.len().to_string(),
+                format_size(&element.size_dedup_global),
+                format_size(&element.size),
+            ]);
         }
 
-        println!("{}", builder.index().build().with(Style::markdown()).to_string());
+        println!(
+            "{}",
+            builder.index().build().with(Style::markdown()).to_string()
+        );
     }
 }
 
@@ -37,4 +48,3 @@ fn byte_to_mega(bytes: &usize) -> f64 {
 fn mega_to_giga(megas: &f64) -> f64 {
     return megas / 1024.0;
 }
-

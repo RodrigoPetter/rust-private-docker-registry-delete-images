@@ -28,8 +28,8 @@ impl RegistryScanner {
         return catalog.into_iter()
         .map(|repo| 
             ScanResult {
+                tags_grouped_by_digest: self.client.get_tags_grouped_by_digest(&repo),
                 repository: repo,
-                tags_grouped_by_digest: HashMap::new(),
                 size: 50000,
                 size_dedup_repo: 50000,
                 size_dedup_global: 50000,

@@ -12,4 +12,5 @@ fn main() {
     let scan_result = scanner.scan();
 
     MainMenu::print(&scan_result);
+    MainMenu::select(&scan_result);
 }

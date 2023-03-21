@@ -1,6 +1,6 @@
 use tabled::{builder::Builder, Style};
 
-use crate::registry::{ScanResult};
+use crate::{registry::{ScanResult}, std_in_out::read_input};
 
 pub struct MainMenu {}
 
@@ -34,6 +34,11 @@ impl MainMenu {
         println!("\nTotal Dedup: {}", format_size(&scan_result.total_dedup_size));
         println!("Total: {:>15}\n", format_size(&scan_result.total_size));
     }
+
+    pub fn select(scan_result: &ScanResult) {
+        let selected = read_input::<usize>("Select an option:");
+    }
+    
 }
 
 fn format_size(size: &usize) -> String {

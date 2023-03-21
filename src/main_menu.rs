@@ -17,7 +17,6 @@ pub struct MainMenu {}
 impl MainMenu {
     const COMMANDS: [Command; 2] = [Command::GC, Command::EXIT];
 
-
     pub fn open(scan_result: &ScanResult) {
         
         loop {
@@ -41,7 +40,6 @@ impl MainMenu {
             "total layers size",
         ]);
 
-        //TODO: Sort before printing
         for element in scan_result.elements.iter() {
             builder.add_record(vec![
                 element.repository.clone(),
@@ -56,10 +54,20 @@ impl MainMenu {
             ]);
         }
 
+        for cmd in MainMenu::COMMANDS {
+            match cmd {
+                Command::GC => builder.add_record(vec!["Run Garbage Collection"]),
+                Command::EXIT => builder.add_record(vec!["Exit"]),
+            };
+        }
+
+
         println!("\nApproximate size used by the compressed images (gzip) in the registry:\n");
         println!(
             "{}",
-            builder.index().build().with(Style::markdown()).to_string()
+            builder.index().build()
+            .with(Style::markdown())
+            .to_string()
         );
 
         println!(

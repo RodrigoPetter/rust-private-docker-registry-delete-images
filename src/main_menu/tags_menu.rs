@@ -1,4 +1,9 @@
-use crate::{registry::{ScanElement, TagGroup}, std_in_out::read_input};
+use std::ops::{Range, RangeInclusive};
+
+use crate::{
+    registry::{ScanElement, TagGroup},
+    std_in_out::read_input,
+};
 use tabled::{builder::Builder, Style};
 
 pub struct TagsMenu {}
@@ -12,16 +17,15 @@ impl TagsMenu {
 
         loop {
             TagsMenu::print(repository);
-            
-            //TODO: Selected should be a Range<>
-            let selected = TagsMenu::select(&repository);
-            
+            let selected = TagsMenu::select_range(repository.tags_grouped_by_digest.len());
+            for s in selected.rev() {
+                println!("[{}] TODO: Implement delete", s);
+            }
             todo!();
         }
     }
 
-    fn print(repository: &ScanElement) {        
-
+    fn print(repository: &ScanElement) {
         let mut builder = Builder::default();
 
         builder.set_columns(vec!["tags", "created", "digest"]);
@@ -53,17 +57,30 @@ impl TagsMenu {
         );
     }
 
-    fn select(repository: &ScanElement) -> usize {
+    fn select_range(max: usize) -> RangeInclusive<usize> {
         loop {
-            let selected = read_input::<usize>("Select a tag for deletion:");
+            let input =
+                read_input::<String>("Select a tag for deletion (Can be a range like `1..23`)");
 
-            match selected {
-                selected if selected < repository.tags_grouped_by_digest.len() => return selected,
-                _ => {
-                    println!("Not a valid option.");
-                    continue;
+            //Try to create a range from input
+            let input = input.split("..").collect::<Vec<_>>();
+            if input.len() == 2 {
+                let start = input[0].trim().parse::<usize>();
+                let end = input[1].trim().parse::<usize>();
+
+                match (start, end) {
+                    (Ok(start), Ok(end)) if end <= max => return start..=end,
+                    _ => ()
+                }
+            } else {
+                match input[0].trim().parse::<usize>() {
+                    Ok(value) if value <= max => return value..=value,
+                    _ => ()
                 }
             }
+
+            println!("Not a valid option.");
+            continue;
         }
     }
 }

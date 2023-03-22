@@ -12,12 +12,11 @@ impl TagsMenu {
 
         loop {
             TagsMenu::print(repository);
-            let selected = TagsMenu::select(&repository);
+            
             //TODO: Selected should be a Range<>
-            match selected {
-                Some(_) => print!("TODO: implement delete"),
-                None => todo!(),
-            }                    
+            let selected = TagsMenu::select(&repository);
+            
+            todo!();
         }
     }
 
@@ -41,7 +40,7 @@ impl TagsMenu {
             ]);
         }
 
-        //TODO: Print return to main menu
+        builder.add_record(vec!["Voltar"]);
         //TODO: Print the sugestion for deletion
 
         println!(
@@ -54,14 +53,12 @@ impl TagsMenu {
         );
     }
 
-    fn select(repository: &ScanElement) -> Option<&TagGroup> {
+    fn select(repository: &ScanElement) -> usize {
         loop {
             let selected = read_input::<usize>("Select a tag for deletion:");
 
             match selected {
-                selected if selected < repository.tags_grouped_by_digest.len() => {
-                    return Some(repository.tags_grouped_by_digest.get(selected).unwrap())
-                }
+                selected if selected < repository.tags_grouped_by_digest.len() => return selected,
                 _ => {
                     println!("Not a valid option.");
                     continue;

@@ -1,7 +1,7 @@
-use std::ops::{RangeInclusive};
+use std::ops::RangeInclusive;
 
 use crate::{
-    registry::{ScanElement, TagGroup},
+    registry::{RegistryClient, ScanElement},
     std_in_out::read_input,
 };
 use tabled::{builder::Builder, Style};
@@ -15,13 +15,18 @@ impl TagsMenu {
             todo!("Go back to the repository list instead of exiting");
         }
 
+        let registry_client = RegistryClient::new();
+
         loop {
             TagsMenu::print(repository);
             let selected = TagsMenu::select_range(repository.tags_grouped_by_digest.len());
-            for s in selected.rev() {
-                println!("[{}] TODO: Implement delete", s);
+            for s in selected {
+                if let Some(tag_group) = repository.tags_grouped_by_digest.get(s) {
+                    registry_client.delete(tag_group);
+                } else {
+                    return;
+                }
             }
-            todo!();
         }
     }
 
@@ -70,7 +75,9 @@ impl TagsMenu {
 
             if input.len() == 1 {
                 if let Ok(value) = &input[0] {
-                    return value.to_owned()..=value.to_owned();
+                    if value <= &max {
+                        return value.to_owned()..=value.to_owned();
+                    }
                 }
             } else if input.len() == 2 {
                 if let (Ok(start), Ok(end)) = (&input[0], &input[1]) {

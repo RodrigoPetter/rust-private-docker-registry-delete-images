@@ -63,19 +63,20 @@ impl TagsMenu {
                 read_input::<String>("Select a tag for deletion (Can be a range like `1..23`)");
 
             //Try to create a range from input
-            let input = input.split("..").collect::<Vec<_>>();
-            if input.len() == 2 {
-                let start = input[0].trim().parse::<usize>();
-                let end = input[1].trim().parse::<usize>();
+            let input = input
+                .split("..")
+                .map(|x| x.trim().parse::<usize>())
+                .collect::<Vec<_>>();
 
-                match (start, end) {
-                    (Ok(start), Ok(end)) if end <= max => return start..=end,
-                    _ => ()
+            if input.len() == 1 {
+                if let Ok(value) = &input[0] {
+                    return value.to_owned()..=value.to_owned();
                 }
-            } else {
-                match input[0].trim().parse::<usize>() {
-                    Ok(value) if value <= max => return value..=value,
-                    _ => ()
+            } else if input.len() == 2 {
+                if let (Ok(start), Ok(end)) = (&input[0], &input[1]) {
+                    if end <= &max && start < end {
+                        return start.to_owned()..=end.to_owned();
+                    }
                 }
             }
 

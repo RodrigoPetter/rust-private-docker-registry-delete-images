@@ -129,6 +129,10 @@ impl RegistryClient {
             .to_string();
     }
 
+    pub fn delete(&self, tag_group: &TagGroup) -> () {
+        println!("TODO: Delete not implemented! {}", tag_group.digest)
+    }
+
     fn get_manifest_v2(&self, repo_name: &str, tag_name: &str) -> Manifest {
         const MANIFEST_PATH: &str = "/manifests/";
         const MANIFEST_V2_HEADER: &str = "application/vnd.docker.distribution.manifest.v2+json";

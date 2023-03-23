@@ -35,7 +35,6 @@ impl TagsMenu {
 
         builder.set_columns(vec!["tags", "created", "digest"]);
 
-        //TODO: Sort before printing
         for group in repository.tags_grouped_by_digest.iter() {
             builder.add_record(vec![
                 group

@@ -19,6 +19,7 @@ impl TagsMenu {
 
         loop {
             TagsMenu::print(repository);
+            TagsMenu::print_delete_suggestion(repository);
             let selected = TagsMenu::select_range(repository.tags_grouped_by_digest.len());
             for s in selected {
                 if let Some(tag_group) = repository.tags_grouped_by_digest.get(s) {
@@ -50,7 +51,6 @@ impl TagsMenu {
         }
 
         builder.add_record(vec!["Voltar"]);
-        //TODO: Print the sugestion for deletion
 
         println!(
             "\nAvaliable tags for the repository [{}]\n",
@@ -89,6 +89,15 @@ impl TagsMenu {
 
             println!("Not a valid option.");
             continue;
+        }
+    }
+
+    fn print_delete_suggestion(repository: &ScanElement) -> () {
+        let suggestion = Some("0..0");
+
+        match suggestion {
+            Some(suggestion) => println!("\nOur delete suggestion is: {}", suggestion),
+            None => println!("\nThis repository SGTM. We suggest you to delete nothing."),
         }
     }
 }

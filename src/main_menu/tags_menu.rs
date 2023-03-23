@@ -23,7 +23,7 @@ impl TagsMenu {
             for s in selected {
                 if let Some(tag_group) = repository.tags_grouped_by_digest.get(s) {
                     registry_client.delete(tag_group);
-                    //TODO: how remove the delete element from the Application state? Passing the property as mutable all way down the call stack seems wrong
+                    //TODO: how remove the deleted element from the Application state? Passing the property as mutable all way down the call stack seems wrong
                 } else {
                     return;
                 }

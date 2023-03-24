@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use chrono::{DateTime, Local, TimeZone, Utc};
 use serde::Deserialize;
 
 const BASE_URL: &str = "http://localhost:5000/v2/";
@@ -14,7 +15,7 @@ pub struct Tag {
 }
 pub struct TagGroup {
     pub digest: String,
-    pub created: String,
+    pub created: DateTime<Utc>,
     pub tags: Vec<Tag>,
 }
 pub struct Manifest {
@@ -86,13 +87,20 @@ impl RegistryClient {
                 .push(tag);
         }
 
-        let mut tags_group_by_digest = tags_group_by_digest.into_iter().map(|(digest, tags)| TagGroup {created: self.get_created(repo_name, tags.first().unwrap()), digest, tags}).collect::<Vec<_>>();
+        let mut tags_group_by_digest = tags_group_by_digest
+            .into_iter()
+            .map(|(digest, tags)| TagGroup {
+                created: self.get_created(repo_name, tags.first().unwrap()),
+                digest,
+                tags,
+            })
+            .collect::<Vec<_>>();
 
         tags_group_by_digest.sort_by(|a, b| a.created.partial_cmp(&b.created).unwrap());
         return tags_group_by_digest;
     }
 
-    pub fn get_created(&self, repo_name: &str, tag: &Tag) -> String {
+    pub fn get_created(&self, repo_name: &str, tag: &Tag) -> DateTime<Utc> {
         const MANIFEST_PATH: &str = "/manifests/";
 
         #[derive(Deserialize)]
@@ -120,13 +128,18 @@ impl RegistryClient {
 
         let v1comp: v1Compatibility =
             serde_json::from_str(&resp.history.first().unwrap().v1Compatibility).unwrap();
-        return v1comp
+
+        let date_string: String = v1comp
             .created
             .split(".")
             .collect::<Vec<_>>()
             .first()
             .unwrap()
             .to_string();
+
+        return Utc
+            .datetime_from_str(&date_string, "%Y-%m-%dT%H:%M:%S")
+            .unwrap();
     }
 
     pub fn delete(&self, tag_group: &TagGroup) -> () {

@@ -45,7 +45,7 @@ impl TagsMenu {
                     .map(|t| t.name.clone())
                     .collect::<Vec<_>>()
                     .join(", "),
-                group.created.clone(),
+                group.created.to_string(),
                 group.digest.clone(),
             ]);
         }
@@ -94,6 +94,13 @@ impl TagsMenu {
 
     fn print_delete_suggestion(repository: &ScanElement) -> () {
         let suggestion = Some("0..0");
+
+        //Should keep all images younger than a week
+        //Should keep the 3 latest versions that start with `V` (ex: "v1.3.2", "v1.2.0", "v1.0.0")
+        //Should keep the 2 latest versions that are only numbers (ex: "37813", "19121")
+        // repository.tags_grouped_by_digest.iter()
+        // .filter(|t| t.created);
+
 
         match suggestion {
             Some(suggestion) => println!("\nOur delete suggestion is: {}", suggestion),

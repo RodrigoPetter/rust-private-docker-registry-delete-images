@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use chrono::{DateTime, Local, TimeZone, Utc};
+use chrono::{DateTime, TimeZone, Utc};
 use serde::Deserialize;
 
 const BASE_URL: &str = "http://localhost:5000/v2/";

@@ -4,6 +4,8 @@ use crate::{
     registry::{RegistryClient, ScanElement},
     std_in_out::read_input,
 };
+use chrono::{Days, Utc};
+use regex::Regex;
 use tabled::{builder::Builder, Style};
 
 pub struct TagsMenu {}
@@ -65,7 +67,7 @@ impl TagsMenu {
     fn select_range(max: usize) -> RangeInclusive<usize> {
         loop {
             let input =
-                read_input::<String>("Select a tag for deletion (Can be a range like `1..23`)");
+                read_input::<String>("Select a tag for deletion (Can be a range like `Y..X`)");
 
             //Try to create a range from input
             let input = input
@@ -93,14 +95,38 @@ impl TagsMenu {
     }
 
     fn print_delete_suggestion(repository: &ScanElement) -> () {
-        let suggestion = Some("0..0");
+        let tag_patter = Regex::new(r"v\d\.").unwrap();
+        let mut tag_patter_counter = 0; //Represent Releases that went to staging and production
+        let mut unknown_patter_counter = 0; //Represent versions deployed to the test environment
+        let mut suggestion = None;
 
-        //Should keep all images younger than a week
-        //Should keep the 3 latest versions that start with `V` (ex: "v1.3.2", "v1.2.0", "v1.0.0")
-        //Should keep the 2 latest versions that are only numbers (ex: "37813", "19121")
-        // repository.tags_grouped_by_digest.iter()
-        // .filter(|t| t.created);
 
+        //This will only work with an ordered Vec<>
+        for i in (0..(repository.tags_grouped_by_digest.len())).rev() {
+            let tg = repository.tags_grouped_by_digest.get(i).unwrap();
+
+            //Should keep the 3 latest versions that start with `v.` (ex: "v1.3.2", "v1.2.0", "v1.0.0")
+            if tg.tags.iter().any(|t| tag_patter.is_match(&t.name)) {
+                tag_patter_counter += 1;
+            } else {
+                //Should keep the 2 latest versions that are not versions/realeas (ex: "37813", "19121", "random_name")
+                unknown_patter_counter += 1;
+            }
+
+            //Should keep all images younger than 2 weeks
+            if tg
+                .created
+                .gt(&Utc::now().checked_sub_days(Days::new(14)).unwrap())
+            {
+                continue;
+            }
+
+            if (tag_patter_counter > 3 && unknown_patter_counter >= 2) || (tag_patter_counter >= 3 && unknown_patter_counter > 2) {
+                //now that we know the top number of the suggestion. The lower part will always be 0;
+                suggestion = Some(format!("0..{}", i));
+                break;
+            }
+        }
 
         match suggestion {
             Some(suggestion) => println!("\nOur delete suggestion is: {}", suggestion),

@@ -53,7 +53,7 @@ impl TagsMenu {
             ]);
         }
 
-        builder.add_record(vec!["Voltar"]);
+        builder.add_record(vec!["Return"]);
 
         println!(
             "\nAvaliable tags for the repository [{}]\n",
@@ -84,7 +84,8 @@ impl TagsMenu {
                 }
             } else if input.len() == 2 {
                 if let (Ok(start), Ok(end)) = (&input[0], &input[1]) {
-                    if end <= &max && start < end {
+                    //max-1 to not accept a range where the "Return" option is present
+                    if end <= &(max-1) && start < end {
                         return start.to_owned()..=end.to_owned();
                     }
                 }

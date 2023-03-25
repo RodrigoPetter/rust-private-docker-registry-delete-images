@@ -19,12 +19,12 @@ pub struct MainMenu {}
 impl MainMenu {
     const COMMANDS: [Command; 2] = [Command::GC, Command::EXIT];
 
-    pub fn open(scan_result: &ScanResult) {
+    pub fn open(scan_result: &mut ScanResult) {
         loop {
             MainMenu::print(&scan_result);
-            let selected = MainMenu::select(&scan_result);
+            let selected = MainMenu::select(scan_result);
             match selected {
-                Some(repo) => TagsMenu::open(&repo),
+                Some(mut repo) => TagsMenu::open(&mut repo),
                 None => (),
             }
         }
@@ -74,13 +74,13 @@ impl MainMenu {
         println!("Total: {:>15}\n", format_size(&scan_result.total_size));
     }
 
-    fn select(scan_result: &ScanResult) -> Option<&ScanElement> {
+    fn select(scan_result: &mut ScanResult) -> Option<&mut ScanElement> {
         loop {
             let selected = read_input::<usize>("Select an option:");
 
             match selected {
                 selected if selected < scan_result.elements.len() => {
-                    return Some(scan_result.elements.get(selected).unwrap())
+                    return Some(scan_result.elements.get_mut(selected).unwrap())
                 }
                 selected if selected == scan_result.elements.len() => todo!("Call GC"),
                 selected if selected == scan_result.elements.len() + 1 => exit(0),

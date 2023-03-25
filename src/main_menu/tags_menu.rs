@@ -10,7 +10,7 @@ use tabled::{builder::Builder, Style};
 
 pub struct TagsMenu {}
 impl TagsMenu {
-    pub fn open(repository: &ScanElement) {
+    pub fn open(repository: &mut ScanElement) {
         println!("{}", repository.repository);
         if repository.tags_grouped_by_digest.len() <= 0 {
             println!("No tags found...");
@@ -25,8 +25,9 @@ impl TagsMenu {
             let selected = TagsMenu::select_range(repository.tags_grouped_by_digest.len());
             for s in selected {
                 if let Some(tag_group) = repository.tags_grouped_by_digest.get(s) {
-                    registry_client.delete(tag_group);
+                    registry_client.delete(tag_group);                    
                     //TODO: how remove the deleted element from the Application state? Passing the property as mutable all way down the call stack seems wrong
+                    repository.tags_grouped_by_digest.remove(s); //TODO: this code is a placeholder. Will remove the wrong element wen using ranges.
                 } else {
                     return;
                 }

@@ -9,7 +9,7 @@ fn main() {
     let mut scanner = registry::RegistryScanner::new();
 
     press_enter_to_continue("You area about to perform a full scan of the registry, this operation can can take several seconds...");
-    let scan_result = scanner.scan();
+    let mut scan_result = scanner.scan();
 
-    MainMenu::open(&scan_result);
+    MainMenu::open(&mut scan_result);
 }

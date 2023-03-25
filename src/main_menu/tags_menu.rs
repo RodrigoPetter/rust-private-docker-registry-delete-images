@@ -23,13 +23,13 @@ impl TagsMenu {
             TagsMenu::print(repository);
             TagsMenu::print_delete_suggestion(repository);
             let selected = TagsMenu::select_range(repository.tags_grouped_by_digest.len());
-            for s in selected {
-                if let Some(tag_group) = repository.tags_grouped_by_digest.get(s) {
-                    registry_client.delete(tag_group);                    
-                    //TODO: how remove the deleted element from the Application state? Passing the property as mutable all way down the call stack seems wrong
-                    repository.tags_grouped_by_digest.remove(s); //TODO: this code is a placeholder. Will remove the wrong element wen using ranges.
-                } else {
-                    return;
+            
+            if selected.end() == &repository.tags_grouped_by_digest.len() {
+                //is the return option
+                return;
+            }else {
+                for tag_group in repository.tags_grouped_by_digest.splice(selected, std::iter::empty()) {
+                    registry_client.delete(&tag_group);                    
                 }
             }
         }
@@ -53,7 +53,7 @@ impl TagsMenu {
             ]);
         }
 
-        builder.add_record(vec!["Return"]);
+        builder.add_record(vec!["RETURN"]);
 
         println!(
             "\nAvaliable tags for the repository [{}]\n",

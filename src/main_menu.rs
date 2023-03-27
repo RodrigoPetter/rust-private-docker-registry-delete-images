@@ -2,7 +2,7 @@ use std::process::exit;
 
 use self::tags_menu::TagsMenu;
 use crate::{
-    registry::{ScanElement, ScanResult},
+    registry::ScanElement,
     std_in_out::read_input,
 };
 use tabled::{builder::Builder, Style};
@@ -19,18 +19,16 @@ pub struct MainMenu {}
 impl MainMenu {
     const COMMANDS: [Command; 2] = [Command::GC, Command::EXIT];
 
-    pub fn open(scan_result: &mut ScanResult) {
-        loop {
-            MainMenu::print(&scan_result);
-            let selected = MainMenu::select(scan_result);
-            match selected {
-                Some(mut repo) => TagsMenu::open(&mut repo),
-                None => (),
-            }
+    pub fn open(scan_result: &mut Vec<ScanElement>) {
+        MainMenu::print(&scan_result);
+        let selected = MainMenu::select(scan_result);
+        match selected {
+            Some(mut repo) => TagsMenu::open(&mut repo),
+            None => (),
         }
     }
 
-    fn print(scan_result: &ScanResult) {
+    fn print(scan_result: &Vec<ScanElement>) {
         let mut builder = Builder::default();
 
         builder.set_columns(vec![
@@ -40,7 +38,7 @@ impl MainMenu {
             "total layers size",
         ]);
 
-        for element in scan_result.elements.iter() {
+        for element in scan_result.iter() {
             builder.add_record(vec![
                 element.repository.clone(),
                 element
@@ -49,8 +47,8 @@ impl MainMenu {
                     .map(|g| g.tags.len())
                     .sum::<usize>()
                     .to_string(),
-                format_size(&element.size_dedup_global),
-                format_size(&element.size),
+                format_size(&0), //TODO: use real size
+                format_size(&0),
             ]);
         }
 
@@ -69,21 +67,21 @@ impl MainMenu {
 
         println!(
             "\nTotal Dedup: {}",
-            format_size(&scan_result.total_dedup_size)
+            format_size(&0)//TODO: use real size
         );
-        println!("Total: {:>15}\n", format_size(&scan_result.total_size));
+        println!("Total: {:>15}\n", format_size(&0));
     }
 
-    fn select(scan_result: &mut ScanResult) -> Option<&mut ScanElement> {
+    fn select(scan_result: &mut Vec<ScanElement>) -> Option<&mut ScanElement> {
         loop {
             let selected = read_input::<usize>("Select an option:");
 
             match selected {
-                selected if selected < scan_result.elements.len() => {
-                    return Some(scan_result.elements.get_mut(selected).unwrap())
+                selected if selected < scan_result.len() => {
+                    return Some(scan_result.get_mut(selected).unwrap())
                 }
-                selected if selected == scan_result.elements.len() => todo!("Call GC"),
-                selected if selected == scan_result.elements.len() + 1 => exit(0),
+                selected if selected == scan_result.len() => todo!("Call GC"),
+                selected if selected == scan_result.len() + 1 => exit(0),
                 _ => {
                     println!("Not a valid option.");
                     continue;

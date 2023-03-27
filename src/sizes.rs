@@ -53,10 +53,3 @@ pub fn calculate(elements: &Vec<ScanElement>) -> HashMap<String, Sizes> {
 
     return result;
 }
-
-//TODO: sorting function
-// result.elements.sort_by(|a, b| {
-//     b.size_dedup_global
-//         .partial_cmp(&a.size_dedup_global)
-//         .unwrap()
-// });

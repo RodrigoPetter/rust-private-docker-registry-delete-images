@@ -81,7 +81,7 @@ impl MainMenu {
                 selected if selected < scan_result.len() => {
                     return Some(scan_result.get_mut(selected).unwrap())
                 }
-                selected if selected == scan_result.len() => todo!("Call GC"),
+                selected if selected == scan_result.len() => run_gc(),
                 selected if selected == scan_result.len() + 1 => exit(0),
                 _ => {
                     println!("Not a valid option.");
@@ -107,4 +107,15 @@ fn byte_to_mega(bytes: &usize) -> f64 {
 
 fn mega_to_giga(megas: &f64) -> f64 {
     return megas / 1024.0;
+}
+
+fn run_gc() -> () {
+    std::process::Command::new("bin/registry")
+        .arg("garbage-collect")
+        .arg("--delete-untagged")
+        .arg("/etc/docker/registry/config.yml")
+        .spawn()
+        .unwrap()
+        .wait()
+        .expect("Error while waiting for GC command to finish...");
 }

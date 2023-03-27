@@ -23,13 +23,16 @@ impl TagsMenu {
             TagsMenu::print(repository);
             TagsMenu::print_delete_suggestion(repository);
             let selected = TagsMenu::select_range(repository.tags_grouped_by_digest.len());
-            
+
             if selected.end() == &repository.tags_grouped_by_digest.len() {
                 //is the return option
                 return;
-            }else {
-                for tag_group in repository.tags_grouped_by_digest.splice(selected, std::iter::empty()) {
-                    registry_client.delete(&tag_group);                    
+            } else {
+                for tag_group in repository
+                    .tags_grouped_by_digest
+                    .splice(selected, std::iter::empty())
+                {
+                    registry_client.delete(&tag_group);
                 }
             }
         }
@@ -85,7 +88,7 @@ impl TagsMenu {
             } else if input.len() == 2 {
                 if let (Ok(start), Ok(end)) = (&input[0], &input[1]) {
                     //max-1 to not accept a range where the "Return" option is present
-                    if end <= &(max-1) && start < end {
+                    if end <= &(max - 1) && start < end {
                         return start.to_owned()..=end.to_owned();
                     }
                 }
@@ -97,11 +100,10 @@ impl TagsMenu {
     }
 
     fn print_delete_suggestion(repository: &ScanElement) -> () {
-        let tag_patter = Regex::new(r"v\d\.").unwrap();
+        let tag_patter = Regex::new(r"v\d+?\.\d+?.\d+?").unwrap();
         let mut tag_patter_counter = 0; //Represent Releases that went to staging and production
         let mut unknown_patter_counter = 0; //Represent versions deployed to the test environment
         let mut suggestion = None;
-
 
         //This will only work with an ordered Vec<>
         for i in (0..(repository.tags_grouped_by_digest.len())).rev() {
@@ -123,7 +125,9 @@ impl TagsMenu {
                 continue;
             }
 
-            if (tag_patter_counter > 3 && unknown_patter_counter >= 2) || (tag_patter_counter >= 3 && unknown_patter_counter > 2) {
+            if (tag_patter_counter > 3 && unknown_patter_counter >= 2)
+                || (tag_patter_counter >= 3 && unknown_patter_counter > 2)
+            {
                 //now that we know the top number of the suggestion. The lower part will always be 0;
                 suggestion = Some(format!("0..{}", i));
                 break;

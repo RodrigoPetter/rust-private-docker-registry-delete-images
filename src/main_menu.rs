@@ -1,9 +1,9 @@
-use std::process::exit;
+use std::{process::exit, collections::HashMap};
 
 use self::tags_menu::TagsMenu;
 use crate::{
     registry::ScanElement,
-    std_in_out::read_input,
+    std_in_out::read_input, sizes::Sizes,
 };
 use tabled::{builder::Builder, Style};
 
@@ -19,8 +19,8 @@ pub struct MainMenu {}
 impl MainMenu {
     const COMMANDS: [Command; 2] = [Command::GC, Command::EXIT];
 
-    pub fn open(scan_result: &mut Vec<ScanElement>) {
-        MainMenu::print(&scan_result);
+    pub fn open(scan_result: &mut Vec<ScanElement>, sizes: &HashMap<String, Sizes>) {
+        MainMenu::print(&scan_result, sizes);
         let selected = MainMenu::select(scan_result);
         match selected {
             Some(mut repo) => TagsMenu::open(&mut repo),
@@ -28,7 +28,7 @@ impl MainMenu {
         }
     }
 
-    fn print(scan_result: &Vec<ScanElement>) {
+    fn print(scan_result: &Vec<ScanElement>, sizes: &HashMap<String, Sizes>) {
         let mut builder = Builder::default();
 
         builder.set_columns(vec![
@@ -47,8 +47,8 @@ impl MainMenu {
                     .map(|g| g.tags.len())
                     .sum::<usize>()
                     .to_string(),
-                format_size(&0), //TODO: use real size
-                format_size(&0),
+                format_size(&sizes[&element.repository].size_dedup_global),
+                format_size(&sizes[&element.repository].size),
             ]);
         }
 
@@ -60,6 +60,7 @@ impl MainMenu {
         }
 
         println!("\nApproximate size used by the compressed images (gzip) in the registry:\n");
+        let totals = &sizes[&"TOTALS".to_string()];
         println!(
             "{}",
             builder.index().build().with(Style::markdown()).to_string()
@@ -67,9 +68,9 @@ impl MainMenu {
 
         println!(
             "\nTotal Dedup: {}",
-            format_size(&0)//TODO: use real size
+            format_size(&totals.size_dedup_global)
         );
-        println!("Total: {:>15}\n", format_size(&0));
+        println!("Total: {:>15}\n", format_size(&totals.size));
     }
 
     fn select(scan_result: &mut Vec<ScanElement>) -> Option<&mut ScanElement> {

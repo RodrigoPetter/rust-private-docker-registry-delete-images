@@ -21,6 +21,6 @@ fn main() {
                 .partial_cmp(&sizes[&a.repository].size_dedup_global)
                 .unwrap()
         });
-        MainMenu::open(&mut scan_result);
+        MainMenu::open(&mut scan_result, &sizes);
     }
 }

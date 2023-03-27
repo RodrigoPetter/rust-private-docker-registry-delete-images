@@ -1,9 +1,10 @@
-use main_menu::{MainMenu};
+use main_menu::MainMenu;
 use std_in_out::press_enter_to_continue;
 
 mod main_menu;
 mod registry;
 mod std_in_out;
+mod sizes;
 
 fn main() {
     let mut scanner = registry::RegistryScanner::new();

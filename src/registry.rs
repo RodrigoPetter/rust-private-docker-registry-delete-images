@@ -16,6 +16,7 @@ pub struct ScanResult {
 pub struct ScanElement {
     pub repository: String,
     pub tags_grouped_by_digest: Vec<TagGroup>,
+    //TODO: all sizes needs to be dynamic and not fixed values
     pub size: usize,
     pub size_dedup_global: usize,
 }

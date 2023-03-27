@@ -14,7 +14,7 @@ impl TagsMenu {
         println!("{}", repository.repository);
         if repository.tags_grouped_by_digest.len() <= 0 {
             println!("No tags found...");
-            todo!("Go back to the repository list instead of exiting");
+            return;
         }
 
         let registry_client = RegistryClient::new();

@@ -32,7 +32,7 @@ impl TagsMenu {
                     .tags_grouped_by_digest
                     .splice(selected, std::iter::empty())
                 {
-                    registry_client.delete(&tag_group);
+                    registry_client.delete_digest(&repository.repository, &tag_group.digest);
                 }
             }
         }

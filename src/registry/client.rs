@@ -142,8 +142,22 @@ impl RegistryClient {
             .unwrap();
     }
 
-    pub fn delete(&self, tag_group: &TagGroup) -> () {
-        println!("TODO: Delete not implemented! {}", tag_group.digest);
+    pub fn delete_digest(&self, repo: &String, digest: &String) -> () {
+        
+        let url = format!("{}{}/manifests/{}",BASE_URL, repo, digest);
+
+        println!("DELETE: {url}");
+
+        let result = self
+            .http_client
+            .delete(url)
+            .send()
+            .unwrap();
+
+        if !result.status().is_success() {
+            println!("Status code different from 2xx when deleting the digest {} -> {}", digest, result.status().as_str());
+            panic!("{}", result.text().unwrap());
+        }
     }
 
     fn get_manifest_v2(&self, repo_name: &str, tag_name: &str) -> Manifest {

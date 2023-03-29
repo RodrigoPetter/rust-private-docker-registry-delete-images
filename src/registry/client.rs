@@ -1,12 +1,11 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, env};
 
 use chrono::{DateTime, TimeZone, Utc};
 use serde::Deserialize;
 
-const BASE_URL: &str = "http://localhost:5000/v2/";
-
 pub struct RegistryClient {
     http_client: reqwest::blocking::Client,
+    url: String
 }
 
 pub struct Tag {
@@ -32,6 +31,10 @@ impl RegistryClient {
     pub fn new() -> RegistryClient {
         RegistryClient {
             http_client: (reqwest::blocking::Client::new()),
+            url: match env::var("REGISTRY_URL") {
+                Ok(url) => url+"/v2/",
+                Err(_) => panic!("Registry URL missing. Please set the value using the env var `REGISTRY_URL`."),
+            }
         }
     }
 
@@ -45,9 +48,9 @@ impl RegistryClient {
 
         let resp: Catalog = self
             .http_client
-            .get(format!("{}{}", BASE_URL, CATALOG_PATH))
+            .get(format!("{}{}", self.url, CATALOG_PATH))
             .send()
-            .expect(&format!("Unable to fetch the catalog. Check that the registry address [{}] is correct and that it is running.", BASE_URL))
+            .expect(&format!("Unable to fetch the catalog. Check that the registry address [{}] is correct and that it is running.", self.url))
             .json()
             .unwrap();
 
@@ -64,7 +67,7 @@ impl RegistryClient {
 
         let resp: Tags = self
             .http_client
-            .get(format!("{}{}{}", BASE_URL, repo_name, TAGS_PATH))
+            .get(format!("{}{}{}", self.url, repo_name, TAGS_PATH))
             .send()
             .unwrap()
             .json()
@@ -121,9 +124,9 @@ impl RegistryClient {
 
         let resp: ManifestV1 = self
         .http_client
-        .get(format!("{}{}{}{}",BASE_URL, repo_name, MANIFEST_PATH, tag.name))
+        .get(format!("{}{}{}{}",self.url, repo_name, MANIFEST_PATH, tag.name))
         .send()
-        .expect(&format!("Unable to fetch the catalog. Check that the registry address [{}] is correct and that it is running.", BASE_URL))
+        .expect(&format!("Unable to fetch the catalog. Check that the registry address [{}] is correct and that it is running.", self.url))
         .json().unwrap();
 
         let v1comp: v1Compatibility =
@@ -144,7 +147,7 @@ impl RegistryClient {
 
     pub fn delete_digest(&self, repo: &String, digest: &String) -> () {
         
-        let url = format!("{}{}/manifests/{}",BASE_URL, repo, digest);
+        let url = format!("{}{}/manifests/{}",self.url, repo, digest);
 
         println!("DELETE: {url}");
 
@@ -172,7 +175,7 @@ impl RegistryClient {
             .http_client
             .get(format!(
                 "{}{}{}{}",
-                BASE_URL, repo_name, MANIFEST_PATH, tag_name
+                self.url, repo_name, MANIFEST_PATH, tag_name
             ))
             .header("Accept", MANIFEST_V2_HEADER)
             .send()

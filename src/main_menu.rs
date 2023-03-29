@@ -81,7 +81,7 @@ impl MainMenu {
                 selected if selected < scan_result.len() => {
                     return Some(scan_result.get_mut(selected).unwrap())
                 }
-                selected if selected == scan_result.len() => run_gc(),
+                selected if selected == scan_result.len() => {run_gc(); return None},
                 selected if selected == scan_result.len() + 1 => exit(0),
                 _ => {
                     println!("Not a valid option.");

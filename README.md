@@ -3,20 +3,13 @@ CLI tool to delete images from a private docker registry made in RUST
 
 Para uma versão em GO veja: https://github.com/RodrigoPetter/go-private-docker-registry-delete-images
 
-O dockerfile deste projeto vai gerar uma imagem composta por 2 componentes principais:
-
-1. Programa em RUST que pode ser executado para apagar imagens antigas.
-1. Uma cópia do [docker registry oficial](https://hub.docker.com/_/registry).
-
 ## Como apagar imagens antigas
-1. Acessar o container do registry: `docker exec -it $CONTAINER_ID sh`
-2. Executar o programa que apaga as imagens: `./delete-images/delete-images`
-3. Seguir as instruções do programa, selecionando os repositórios e as tags que deseja-se apagar.
+1. Executar o seguinte comando: `docker build . -t delete-images && docker run -it -e REGISTRY_URL=https://MEU_REGISTRY delete-images`
+    - Alternativamente você pode usar `REGISTRY_URL=https://myregistry.com cargo run` se tiver rust instalado.
+2. Seguir as instruções do programa, selecionando os repositórios e as tags que deseja-se apagar.
 
 ## Executando o GC
-1. Executar os passos anteriores e selecionar a opção 999 do menu do programa `delete-images`
-
-
+1. Executar os passos anteriores e selecionar penultima opção do menu do programa: "Run Garbage Collection"
 <br>
 <br>
 <br>

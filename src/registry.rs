@@ -1,7 +1,9 @@
-pub use self::client::{RegistryClient};
+pub use self::client::RegistryClient;
 pub use self::client::TagGroup;
+use self::progress_bar::ScanProgressBar;
 
 mod client;
+mod progress_bar;
 
 pub struct RegistryScanner {
     client: RegistryClient,
@@ -22,16 +24,24 @@ impl RegistryScanner {
     pub fn scan(&mut self) -> Vec<ScanElement> {
         let catalog = self.client.get_catalog();
 
-         return catalog
-                .into_iter()
-                .map(|repo| {
-                    //TODO: this line should be async with multi-thread to reduce scan time
-                    let tags_grouped_by_digest = self.client.get_tags_grouped_by_digest(&repo);
-                    return ScanElement {
-                        repository: repo,
-                        tags_grouped_by_digest
-                    };
-                })
+        let spb = ScanProgressBar::new(catalog.len().try_into().unwrap());
+
+        return catalog
+            .into_iter()
+            .map(|repo| {
+
+                spb.total_bar.set_message(format!("Catalog: {}", repo));
+
+                //TODO: this line should be async with multi-thread to reduce scan time
+                let tags_grouped_by_digest = self.client.get_tags_grouped_by_digest(&repo);
+
+                spb.total_bar.inc(1);
+
+                return ScanElement {
+                    repository: repo,
+                    tags_grouped_by_digest,
+                };
+            })
             .collect::<Vec<_>>();
     }
 }

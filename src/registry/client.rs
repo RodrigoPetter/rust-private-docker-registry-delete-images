@@ -167,10 +167,11 @@ impl RegistryClient {
         const MANIFEST_PATH: &str = "/manifests/";
         const MANIFEST_V2_HEADER: &str = "application/vnd.docker.distribution.manifest.v2+json";
 
-        println!(
-            "Fetching [{}] repository manifest for [{}]...",
-            repo_name, tag_name
-        );
+        //TODO: put in progress bar
+        // println!(
+        //     "Fetching [{}] repository manifest for [{}]...",
+        //     repo_name, tag_name
+        // );
         let resp = self
             .http_client
             .get(format!(

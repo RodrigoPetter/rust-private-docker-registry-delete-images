@@ -3,9 +3,11 @@ use std::{collections::HashMap, env};
 use chrono::{DateTime, TimeZone, Utc};
 use serde::Deserialize;
 
+use super::progress_bar::ProgressBarWrapper;
+
 pub struct RegistryClient {
     http_client: reqwest::blocking::Client,
-    url: String
+    url: String,
 }
 
 pub struct Tag {
@@ -32,9 +34,11 @@ impl RegistryClient {
         RegistryClient {
             http_client: (reqwest::blocking::Client::new()),
             url: match env::var("REGISTRY_URL") {
-                Ok(url) => url+"/v2/",
-                Err(_) => panic!("Registry URL missing. Please set the value using the env var `REGISTRY_URL`."),
-            }
+                Ok(url) => url + "/v2/",
+                Err(_) => panic!(
+                    "Registry URL missing. Please set the value using the env var `REGISTRY_URL`."
+                ),
+            },
         }
     }
 
@@ -57,8 +61,14 @@ impl RegistryClient {
         return resp.repositories;
     }
 
-    pub fn get_tags_grouped_by_digest(&self, repo_name: &str) -> Vec<TagGroup> {
+    pub fn get_tags_grouped_by_digest(
+        &self,
+        repo_name: &str,
+        bar: &ProgressBarWrapper,
+    ) -> Vec<TagGroup> {
         const TAGS_PATH: &str = "/tags/list";
+
+        bar.set_message(format!("Fetchin [/tags/list] for {}", repo_name));
 
         #[derive(Deserialize)]
         struct Tags {
@@ -73,12 +83,24 @@ impl RegistryClient {
             .json()
             .unwrap();
 
+        bar.set_length(resp.tags.len().try_into().unwrap());
+        bar.set_message(format!("Found {} tags for {}", resp.tags.len(), repo_name));
+
         let tags: Vec<Tag> = resp
             .tags
             .into_iter()
-            .map(|tag_name| Tag {
-                manifest: self.get_manifest_v2(repo_name, &tag_name),
-                name: tag_name,
+            .map(|tag_name| {
+                bar.set_message(format!(
+                    "Fetchin manifest of [{}] for {}",
+                    tag_name, repo_name
+                ));
+
+                let tag = Tag {
+                    manifest: self.get_manifest_v2(repo_name, &tag_name),
+                    name: tag_name,
+                };
+                bar.inc(1);
+                return tag;
             })
             .collect();
 
@@ -146,19 +168,18 @@ impl RegistryClient {
     }
 
     pub fn delete_digest(&self, repo: &String, digest: &String) -> () {
-        
-        let url = format!("{}{}/manifests/{}",self.url, repo, digest);
+        let url = format!("{}{}/manifests/{}", self.url, repo, digest);
 
         println!("DELETE: {url}");
 
-        let result = self
-            .http_client
-            .delete(url)
-            .send()
-            .unwrap();
+        let result = self.http_client.delete(url).send().unwrap();
 
         if !result.status().is_success() {
-            println!("Status code different from 2xx when deleting the digest {} -> {}", digest, result.status().as_str());
+            println!(
+                "Status code different from 2xx when deleting the digest {} -> {}",
+                digest,
+                result.status().as_str()
+            );
             panic!("{}", result.text().unwrap());
         }
     }
@@ -167,11 +188,6 @@ impl RegistryClient {
         const MANIFEST_PATH: &str = "/manifests/";
         const MANIFEST_V2_HEADER: &str = "application/vnd.docker.distribution.manifest.v2+json";
 
-        //TODO: put in progress bar
-        // println!(
-        //     "Fetching [{}] repository manifest for [{}]...",
-        //     repo_name, tag_name
-        // );
         let resp = self
             .http_client
             .get(format!(

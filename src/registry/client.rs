@@ -43,7 +43,7 @@ impl RegistryClient {
     }
 
     pub fn get_catalog(&self) -> Vec<String> {
-        const CATALOG_PATH: &str = "_catalog";
+        const CATALOG_PATH: &str = "_catalog?n=5000";
 
         #[derive(Deserialize)]
         struct Catalog {

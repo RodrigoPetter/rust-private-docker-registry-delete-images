@@ -71,7 +71,7 @@ impl RegistryClient {
     ) -> Vec<TagGroup> {
         const TAGS_PATH: &str = "/tags/list";
 
-        bar.set_message(format!("Fetchin [/tags/list] for {}", repo_name));
+        bar.set_message(format!("Fetching [/tags/list] for {}", repo_name));
 
         #[derive(Deserialize)]
         struct Tags {
@@ -94,7 +94,7 @@ impl RegistryClient {
             .into_iter()
             .map(|tag_name| {
                 bar.set_message(format!(
-                    "Fetchin manifest of [{}] for {}",
+                    "Fetching manifest of [{}] for {}",
                     tag_name, repo_name
                 ));
 

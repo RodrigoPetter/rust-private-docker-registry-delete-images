@@ -43,12 +43,15 @@ impl RegistryClient {
     }
 
     pub fn get_catalog(&self) -> Vec<String> {
-        const CATALOG_PATH: &str = "_catalog?n=5000";
+        const CATALOG_PATH: &str = "_catalog?n=1000";
 
         #[derive(Deserialize)]
         struct Catalog {
             repositories: Vec<String>,
         }
+
+
+        println!("{}{}", self.url, CATALOG_PATH);
 
         let resp: Catalog = self
             .http_client
